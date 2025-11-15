@@ -1,285 +1,127 @@
-# ISA-OS Index
+# ISA-OS Comprehensive Index
 
-Complete index of all files, modules, and features in ISA-OS.
-
-## 📂 Directory Structure
-
-```
-isa-os/
-├── boot/                       # Bootloader
-│   └── boot.asm               # 16-bit → 32-bit bootloader
-├── kernel/                     # Kernel source
-│   ├── core/                  # Core kernel components
-│   │   ├── kernel.asm         # Assembly entry, syscalls
-│   │   ├── kernel.c           # Main kernel, scheduler
-│   │   ├── module.c           # Module system
-│   │   ├── config.c           # Configuration system
-│   │   ├── isaf.c             # ISA-FS filesystem
-│   │   └── audit.c            # Audit logging
-│   ├── drivers/               # Hardware drivers (L0)
-│   │   ├── modbus.c           # Modbus RTU
-│   │   ├── profinet.c         # PROFINET IO
-│   │   ├── ethercat.c         # EtherCAT
-│   │   ├── can_bus.c          # CAN Bus
-│   │   ├── spi.c              # SPI
-│   │   └── i2c.c              # I2C
-│   ├── services/              # System services (L2+)
-│   │   ├── opc_ua.c           # OPC UA server
-│   │   └── mqtt.c             # MQTT client
-│   ├── include/               # Header files
-│   │   ├── isa_types.h        # Type definitions
-│   │   ├── module.h           # Module system API
-│   │   └── config.h           # Configuration API
-│   └── linker.ld              # Linker script
-├── userspace/                  # Userspace programs
-│   ├── lib/
-│   │   └── libisa.h           # Syscall library
-│   └── examples/
-│       ├── l0_monitor.c       # L0 sensor monitor
-│       ├── l1_pid.c           # L1 PID controller
-│       └── l3_batch.c         # L3 batch executor
-├── config/                     # Configuration files
-│   ├── isa-os.yaml            # Main config (YAML)
-│   ├── isa-os.json            # Main config (JSON)
-│   └── modules.conf           # Module config
-├── build/                      # Build output (generated)
-├── docs/                       # Documentation
-├── .isa-os.manifest           # System manifest
-├── ARCHITECTURE.md            # Architecture docs
-├── MODULES.md                 # Module system docs
-├── INDEX.md                   # This file
-├── README.md                  # Main readme
-├── LICENSE                    # MIT License
-├── Makefile                   # Build system
-└── .gitignore                 # Git ignore rules
-```
-
-## 🧬 Core Components
-
-### Bootloader
-- **boot/boot.asm** (272 lines)
-  - Real mode startup
-  - GDT setup
-  - A20 line enable
-  - Protected mode transition
-  - Kernel loading
-
-### Kernel Core
-- **kernel/core/kernel.asm** (247 lines)
-  - Kernel entry point
-  - IDT setup
-  - Timer interrupt (PIT)
-  - Syscall handler (INT 0x80)
-  - Context switching
-
-- **kernel/core/kernel.c** (391 lines)
-  - Main kernel (`kmain`)
-  - ISA-95 syscalls (L0-L4)
-  - Agent scheduler
-  - IPC system
-  - VGA console
-
-- **kernel/core/module.c** (232 lines)
-  - Module discovery
-  - Auto-loading
-  - Dependency resolution
-  - Runtime management
-
-- **kernel/core/config.c** (187 lines)
-  - Configuration store
-  - Get/Set operations
-  - Default values
-  - ISA-FS integration
-
-- **kernel/core/isaf.c** (223 lines)
-  - ISA filesystem
-  - Level-based permissions
-  - File operations
-  - Directory structure
-
-- **kernel/core/audit.c** (188 lines)
-  - Audit logging
-  - CRC64 integrity
-  - Compliance (21 CFR Part 11)
-  - Export functionality
-
-## 🔌 Drivers (L0)
-
-| Driver     | File                  | Lines | Features                        |
-|------------|-----------------------|-------|---------------------------------|
-| Modbus RTU | drivers/modbus.c      | 157   | RS-485, CRC16, Read/Write regs  |
-| PROFINET   | drivers/profinet.c    | 109   | DCP, RT/IRT, Cyclic I/O         |
-| EtherCAT   | drivers/ethercat.c    | 123   | Distributed clocks, State machine |
-| CAN Bus    | drivers/can_bus.c     | 98    | 11/29-bit IDs, Filters          |
-| SPI        | drivers/spi.c         | 107   | 4 modes, Full-duplex            |
-| I2C        | drivers/i2c.c         | 125   | 100/400kHz, Bus scanning        |
-
-## 📡 Protocols (L2)
-
-| Protocol | File               | Lines | Features                    |
-|----------|--------------------|-------|-----------------------------|
-| OPC UA   | services/opc_ua.c  | 134   | Server, Nodes, Browse       |
-| MQTT     | services/mqtt.c    | 145   | Pub/Sub, QoS 0/1/2, Topics  |
+*Auto-generated: 2025-11-15 00:46:40*
 
 ## 📊 Statistics
 
-### Code Metrics
 ```
-Total Lines of Code: ~3,800
-  - Assembly:        ~520  (13.7%)
-  - C:              ~3,100 (81.6%)
-  - Headers:         ~180  (4.7%)
-
-Total Files: 32
-  - Source (.c/.asm): 19
-  - Headers (.h):      3
-  - Config:            4
-  - Documentation:     6
-
-Modules: 12
-  - Drivers:    6
-  - Protocols:  2
-  - Services:   4
-
-ISA Levels Implemented:
-  - L0: Field I/O ✅
-  - L1: Control ✅
-  - L2: SCADA ✅
-  - L3: MES ✅
-  - L4: ERP ✅
+Total Files:        26
+  C source files:   20
+  Assembly files:   2
+  Header files:     4
+Total Lines:        4,350
+Registered Modules: 11
+System Calls:       12
 ```
 
-### File Sizes
-```
-boot.asm         ~  8 KB
-kernel.c         ~ 15 KB
-module.c         ~  9 KB
-config.c         ~  7 KB
-isaf.c           ~  8 KB
-audit.c          ~  7 KB
-All drivers      ~ 18 KB
-All services     ~ 10 KB
-Total source     ~ 82 KB
-```
+## 🧩 Registered Modules
 
-## 🎯 ISA-95 Syscalls
+| Module | Type | Level | Description | File |
+|--------|------|-------|-------------|------|
+| can_bus | DRIVER | Core | CAN Bus Driver | `kernel/drivers/can_bus.c` |
+| config_system | SERVICE | Core | Configuration System | `kernel/core/config.c` |
+| i2c | DRIVER | Core | I2C Driver | `kernel/drivers/i2c.c` |
+| memory | SERVICE | Core | Memory Manager | `kernel/core/memory.c` |
+| mqtt | PROTOCOL | L2 | MQTT Client | `kernel/services/mqtt.c` |
+| my_module | DRIVER | Core | Description | `kernel/include/module.h` |
+| opc_ua | PROTOCOL | L2 | OPC UA Server | `kernel/services/opc_ua.c` |
+| rtc | DRIVER | Core | Real-Time Clock | `kernel/drivers/rtc.c` |
+| shell | SERVICE | Core | Interactive Shell | `kernel/services/shell.c` |
+| spi | DRIVER | Core | SPI Driver | `kernel/drivers/spi.c` |
+| watchdog | SERVICE | Core | Watchdog Timer | `kernel/services/watchdog.c` |
 
-| Level | Syscall              | Number | Function                  |
-|-------|----------------------|--------|---------------------------|
-| L0    | sys_l0_read          | 0      | Read sensor               |
-| L1    | sys_l1_write         | 1      | Write actuator            |
-| L2    | sys_l2_alarm         | 2      | Raise alarm               |
-| L3    | sys_l3_batch_start   | 3      | Start batch               |
-| L4    | sys_l4_erp_sync      | 4      | Sync with ERP             |
-| Agent | sys_agent_spawn      | 5      | Create agent              |
-| Agent | sys_agent_send       | 6      | Send message              |
-| Agent | sys_yield            | 7      | Yield CPU                 |
+## 🔧 System Calls
 
-## 🔧 Configuration Files
+| Syscall | File |
+|---------|------|
+| sys_agent_send | `kernel/core/kernel.c` |
+| sys_agent_spawn | `kernel/core/kernel.c` |
+| sys_l0_read | `kernel/core/kernel.c` |
+| sys_l0_read | `kernel/services/shell.c` |
+| sys_l1_write | `kernel/core/kernel.c` |
+| sys_l1_write | `kernel/services/shell.c` |
+| sys_l2_alarm | `kernel/drivers/profinet.c` |
+| sys_l2_alarm | `kernel/core/kernel.c` |
+| sys_l2_alarm | `kernel/services/shell.c` |
+| sys_l3_batch_start | `kernel/core/kernel.c` |
+| sys_l4_erp_sync | `kernel/core/kernel.c` |
+| sys_yield | `kernel/core/kernel.c` |
 
-### isa-os.yaml (Main Configuration)
-- System settings
-- ISA level configuration
-- Protocol settings
-- Driver configuration
-- Security & compliance
-- Network settings
+## 📂 File Tree
 
-### isa-os.json (Alternative Format)
-- Same structure as YAML
-- JSON format for tools
-- Machine-readable
 
-### modules.conf (Module Loading)
-- Module enable/disable
-- Load order
-- Driver parameters
-- Protocol settings
+### boot/
 
-### .isa-os.manifest (System Manifest)
-- Module inventory
-- Version information
-- Standards compliance
-- Capabilities
-- Checksums
+- **boot.asm** (7.8 KB)
 
-## 📖 Documentation
+### kernel/core/
 
-| File             | Purpose                              |
-|------------------|--------------------------------------|
-| README.md        | Overview, quick start, examples      |
-| ARCHITECTURE.md  | Technical architecture, internals    |
-| MODULES.md       | Module system, creating modules      |
-| INDEX.md         | This file - complete index           |
-| LICENSE          | MIT License                          |
+- **audit.c** (5.5 KB)
+- **config.c** (6.6 KB)
+- **isaf.c** (7.1 KB)
+- **kernel.asm** (10.6 KB)
+- **kernel.c** (14.1 KB)
+- **memory.c** (4.9 KB)
+- **module.c** (7.7 KB)
 
-## 🚀 Build Targets
+### kernel/drivers/
 
-```bash
-make              # Build everything
-make clean        # Clean build artifacts
-make run          # Run in QEMU
-make debug        # Debug with GDB
-make help         # Show help
-```
+- **can_bus.c** (2.9 KB)
+- **ethercat.c** (3.2 KB)
+- **i2c.c** (3.0 KB)
+- **modbus.c** (4.8 KB)
+- **profinet.c** (3.1 KB)
+- **rtc.c** (4.4 KB)
+- **spi.c** (2.8 KB)
 
-## 📦 Build Artifacts
+### kernel/include/
 
-Generated in `build/`:
-- boot.bin        # Bootloader (512 bytes)
-- kernel.bin      # Kernel binary
-- isa-os.img      # Bootable image (1.44MB floppy)
-- *.o             # Object files
+- **config.h** (2.7 KB)
+- **isa_types.h** (5.7 KB)
+- **module.h** (4.3 KB)
 
-## 🔍 Search Index
+### kernel/services/
+
+- **mqtt.c** (3.4 KB)
+- **opc_ua.c** (3.4 KB)
+- **shell.c** (8.0 KB)
+- **watchdog.c** (2.8 KB)
+
+### userspace/examples/
+
+- **l0_monitor.c** (1.5 KB)
+- **l1_pid.c** (1.9 KB)
+- **l3_batch.c** (3.9 KB)
+
+### userspace/lib/
+
+- **libisa.h** (6.9 KB)
+
+## 📚 Documentation
+
+- [README.md](README.md) - Main overview
+- [QUICKSTART.md](QUICKSTART.md) - 5-minute setup
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Technical architecture
+- [MODULES.md](MODULES.md) - Module system guide
+- [INDEX.md](INDEX.md) - This file (auto-generated)
+
+## 🔍 Quick Search
 
 ### By Feature
-- **Modular System**: module.c, module.h, MODULES.md
-- **Configuration**: config.c, config.h, config/*.yaml
-- **ISA-95**: isa_types.h, kernel.c (all syscalls)
-- **ISA-88**: kernel.c (batch system), l3_batch.c
-- **ISA-18.2**: kernel.c (alarms), l0_monitor.c
-- **21 CFR Part 11**: audit.c
-- **Real-Time**: kernel.c (scheduler), kernel.asm (timer)
-- **IPC**: kernel.c (message_queue)
-- **Filesystem**: isaf.c
+- **ISA-95 Levels**: L0 (Field), L1 (Control), L2 (SCADA), L3 (MES), L4 (ERP)
+- **Protocols**: Modbus, PROFINET, EtherCAT, CAN, OPC UA, MQTT
+- **Interfaces**: SPI, I2C, UART
+- **Standards**: ISA-95, ISA-88, ISA-18.2, 21 CFR Part 11
 
-### By ISA Level
-- **L0**: modbus.c, profinet.c, ethercat.c, can_bus.c, spi.c, i2c.c
-- **L1**: kernel.c (sys_l1_write), l1_pid.c
-- **L2**: opc_ua.c, mqtt.c, kernel.c (sys_l2_alarm)
-- **L3**: kernel.c (sys_l3_batch_start), l3_batch.c
-- **L4**: kernel.c (sys_l4_erp_sync)
+### By Type
 
-### By Protocol
-- **Modbus**: drivers/modbus.c
-- **PROFINET**: drivers/profinet.c
-- **EtherCAT**: drivers/ethercat.c
-- **CAN**: drivers/can_bus.c
-- **OPC UA**: services/opc_ua.c
-- **MQTT**: services/mqtt.c
+**Drivers (5)**: can_bus, i2c, rtc, spi, my_module
 
-## 🎓 Learning Path
+**Protocols (2)**: mqtt, opc_ua
 
-1. **Start Here**: README.md
-2. **Understand Architecture**: ARCHITECTURE.md
-3. **See Bootloader**: boot/boot.asm
-4. **Study Kernel**: kernel/core/kernel.c
-5. **Learn Modules**: MODULES.md
-6. **Try Examples**: userspace/examples/
-7. **Add Features**: Follow MODULES.md guide
-
-## 🔗 Quick Links
-
-- Main README: [README.md](README.md)
-- Architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
-- Module System: [MODULES.md](MODULES.md)
-- Configuration: [config/isa-os.yaml](config/isa-os.yaml)
-- Manifest: [.isa-os.manifest](.isa-os.manifest)
+**Services (4)**: config_system, memory, shell, watchdog
 
 ---
 
-**ISA-OS** - Industrial Automation Operating System
-**Version**: 1.0.0
-**License**: MIT
-**Architecture**: x86_32 (with plans for x86_64, ARM, RISC-V)
+*This index is automatically generated from source code.*
+*Run `./scripts/generate_index.py` to update.*

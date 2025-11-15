@@ -29,6 +29,7 @@ KERNEL_ASM = $(KERNEL_DIR)/core/kernel.asm
 KERNEL_C = $(KERNEL_DIR)/core/kernel.c \
            $(KERNEL_DIR)/core/module.c \
            $(KERNEL_DIR)/core/config.c \
+           $(KERNEL_DIR)/core/memory.c \
            $(KERNEL_DIR)/core/isaf.c \
            $(KERNEL_DIR)/core/audit.c \
            $(KERNEL_DIR)/drivers/modbus.c \
@@ -37,8 +38,11 @@ KERNEL_C = $(KERNEL_DIR)/core/kernel.c \
            $(KERNEL_DIR)/drivers/can_bus.c \
            $(KERNEL_DIR)/drivers/spi.c \
            $(KERNEL_DIR)/drivers/i2c.c \
+           $(KERNEL_DIR)/drivers/rtc.c \
            $(KERNEL_DIR)/services/opc_ua.c \
-           $(KERNEL_DIR)/services/mqtt.c
+           $(KERNEL_DIR)/services/mqtt.c \
+           $(KERNEL_DIR)/services/shell.c \
+           $(KERNEL_DIR)/services/watchdog.c
 
 # ── Object Files ──
 KERNEL_ASM_OBJ = $(BUILD_DIR)/kernel_asm.o
@@ -113,6 +117,11 @@ run: $(IMAGE)
 debug: $(IMAGE)
 	@echo "[DBG] Starting ISA-OS in debug mode (GDB on :1234)..."
 	$(QEMU) -drive file=$(IMAGE),format=raw -serial stdio -s -S
+
+# ── Update Index ──
+index:
+	@echo "[IDX] Generating auto-index..."
+	@python3 scripts/generate_index.py 2>/dev/null || echo "Warning: Python not available"
 
 # ── Clean Build Artifacts ──
 clean:
