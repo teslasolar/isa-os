@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISA-OS - Industrial Automation Operating System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 2px solid #0f3460;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            color: #00d9ff;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 20px rgba(0, 217, 255, 0.5);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #a0a0a0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .terminal-container {
+            background: #1e1e1e;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 2rem 0;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+        }
+
+        .terminal-header {
+            background: #2d2d2d;
+            padding: 0.5rem 1rem;
+            border-radius: 5px 5px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .terminal-button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-button.close { background: #ff5f56; }
+        .terminal-button.minimize { background: #ffbd2e; }
+        .terminal-button.maximize { background: #27c93f; }
+
+        .terminal {
+            background: #000;
+            color: #0f0;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            height: 500px;
+            overflow-y: auto;
+            border-radius: 0 0 5px 5px;
+        }
+
+        .terminal pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 217, 255, 0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .feature-card h3 {
+            color: #00d9ff;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .feature-card ul {
+            list-style: none;
+            padding-left: 1rem;
+        }
+
+        .feature-card li::before {
+            content: "✓ ";
+            color: #27c93f;
+            font-weight: bold;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+            border: 2px solid;
+        }
+
+        .btn-primary {
+            background: #00d9ff;
+            color: #1a1a2e;
+            border-color: #00d9ff;
+        }
+
+        .btn-primary:hover {
+            background: transparent;
+            color: #00d9ff;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #00d9ff;
+            border-color: #00d9ff;
+        }
+
+        .btn-secondary:hover {
+            background: #00d9ff;
+            color: #1a1a2e;
+        }
+
+        .docker-command {
+            background: #2d2d2d;
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+            border-left: 4px solid #00d9ff;
+        }
+
+        .docker-command code {
+            color: #00d9ff;
+            font-family: 'Courier New', monospace;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+            border-top: 1px solid #333;
+            margin-top: 4rem;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏭 ISA-OS 🏭</h1>
+        <p>Industrial Automation Operating System</p>
+        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Native ISA-95 Architecture | Real-Time | Open Source</p>
+    </div>
+
+    <div class="container">
+        <div class="terminal-container">
+            <div class="terminal-header">
+                <div class="terminal-button close"></div>
+                <div class="terminal-button minimize"></div>
+                <div class="terminal-button maximize"></div>
+                <span style="margin-left: 1rem; color: #999;">ISA-OS Terminal</span>
+            </div>
+            <div class="terminal">
+                <pre id="terminal-output">ISA-OS Kernel v1.0
+==================
+
+Initializing ISA-95 Levels...
+Agents: OK
+IPC: OK
+Alarms: OK
+Batches: OK
+
+[MODULE] Discovered: 16 modules
+[MODULE] Loading modules...
+
+ISA-OS Ready!
+
+isa-os> <span style="color: #0f0;">_</span></pre>
+            </div>
+        </div>
+
+        <div class="cta-buttons">
+            <a href="https://github.com/teslasolar/isa-os" class="btn btn-primary">
+                📦 GitHub Repository
+            </a>
+            <a href="#docker" class="btn btn-secondary">
+                🐳 Docker Setup
+            </a>
+            <a href="../README.md" class="btn btn-secondary">
+                📖 Documentation
+            </a>
+        </div>
+
+        <div class="features">
+            <div class="feature-card">
+                <h3>🧬 ISA-95 Native</h3>
+                <ul>
+                    <li>L0: Field Device I/O</li>
+                    <li>L1: PLC Control Loops</li>
+                    <li>L2: SCADA & Alarms</li>
+                    <li>L3: MES & Batching</li>
+                    <li>L4: ERP Integration</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h3>📡 Industrial Protocols</h3>
+                <ul>
+                    <li>Modbus RTU</li>
+                    <li>PROFINET IO</li>
+                    <li>EtherCAT</li>
+                    <li>CAN Bus</li>
+                    <li>OPC UA Server</li>
+                    <li>MQTT Client</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h3>⚡ Real-Time Features</h3>
+                <ul>
+                    <li>Priority Scheduling</li>
+                    <li>&lt;1μs Context Switch</li>
+                    <li>&lt;10μs L0 I/O Cycle</li>
+                    <li>Deterministic Timing</li>
+                    <li>Agent-Based Architecture</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h3>🔧 Modern DevOps</h3>
+                <ul>
+                    <li>Auto-Loading Modules</li>
+                    <li>Docker Support</li>
+                    <li>CI/CD Pipeline</li>
+                    <li>Auto-Generated Docs</li>
+                    <li>Interactive Shell</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h3>📊 Standards Compliant</h3>
+                <ul>
+                    <li>ISA-95 (Control Integration)</li>
+                    <li>ISA-88 (Batch Control)</li>
+                    <li>ISA-18.2 (Alarms)</li>
+                    <li>21 CFR Part 11 (FDA)</li>
+                    <li>EU Annex 11</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h3>💡 Easy to Extend</h3>
+                <ul>
+                    <li>Modular Architecture</li>
+                    <li>Simple Module Registration</li>
+                    <li>Zero Config Required</li>
+                    <li>Comprehensive API</li>
+                    <li>Example Programs</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2 id="docker" style="color: #00d9ff; margin: 3rem 0 1rem 0; text-align: center;">
+            🐳 Quick Start with Docker
+        </h2>
+
+        <div class="docker-command">
+            <p><strong>Pull and run ISA-OS:</strong></p>
+            <code>docker pull ghcr.io/teslasolar/isa-os:latest</code><br>
+            <code>docker run -it -p 4444:4444 ghcr.io/teslasolar/isa-os:latest</code>
+        </div>
+
+        <div class="docker-command">
+            <p><strong>Or use docker-compose:</strong></p>
+            <code>git clone https://github.com/teslasolar/isa-os.git</code><br>
+            <code>cd isa-os</code><br>
+            <code>docker-compose up</code>
+        </div>
+
+        <div class="docker-command">
+            <p><strong>Access web terminal:</strong></p>
+            <code>Open browser: http://localhost:7681</code>
+        </div>
+
+        <div class="docker-command">
+            <p><strong>Build from source:</strong></p>
+            <code>git clone https://github.com/teslasolar/isa-os.git</code><br>
+            <code>cd isa-os</code><br>
+            <code>make</code><br>
+            <code>make run</code>
+        </div>
+
+        <h2 style="color: #00d9ff; margin: 3rem 0 1rem 0; text-align: center;">
+            📚 Learn More
+        </h2>
+
+        <div style="text-align: center; margin: 2rem 0;">
+            <p>Check out the comprehensive documentation:</p>
+            <div class="cta-buttons" style="margin-top: 1rem;">
+                <a href="../QUICKSTART.md" class="btn btn-secondary">Quick Start Guide</a>
+                <a href="../ARCHITECTURE.md" class="btn btn-secondary">Architecture</a>
+                <a href="../MODULES.md" class="btn btn-secondary">Module System</a>
+                <a href="API.md" class="btn btn-secondary">API Reference</a>
+            </div>
+        </div>
+
+        <h2 style="color: #00d9ff; margin: 3rem 0 1rem 0; text-align: center;">
+            📊 Statistics
+        </h2>
+
+        <div style="background: rgba(255, 255, 255, 0.05); padding: 2rem; border-radius: 10px; text-align: center;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">
+                <div>
+                    <div style="font-size: 2rem; color: #00d9ff; font-weight: bold;">16</div>
+                    <div style="color: #999;">Modules</div>
+                </div>
+                <div>
+                    <div style="font-size: 2rem; color: #00d9ff; font-weight: bold;">~6,800</div>
+                    <div style="color: #999;">Lines of Code</div>
+                </div>
+                <div>
+                    <div style="font-size: 2rem; color: #00d9ff; font-weight: bold;">8</div>
+                    <div style="color: #999;">System Calls</div>
+                </div>
+                <div>
+                    <div style="font-size: 2rem; color: #00d9ff; font-weight: bold;">&lt;100ms</div>
+                    <div style="color: #999;">Boot Time</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>ISA-OS - Industrial Automation Operating System</p>
+        <p style="margin-top: 0.5rem;">MIT License | Built with ❤️ for Industry 4.0</p>
+        <p style="margin-top: 0.5rem;">
+            <a href="https://github.com/teslasolar/isa-os" style="color: #00d9ff;">GitHub</a> |
+            <a href="https://github.com/teslasolar/isa-os/issues" style="color: #00d9ff;">Issues</a> |
+            <a href="../LICENSE" style="color: #00d9ff;">License</a>
+        </p>
+    </footer>
+
+    <script>
+        // Simulate terminal typing effect
+        const terminalOutput = document.getElementById('terminal-output');
+        const commands = [
+            'help',
+            'modules',
+            'stats',
+            'l0 read 0',
+            'l2 alarm "System ready"'
+        ];
+
+        let commandIndex = 0;
+
+        function addCommand() {
+            if (commandIndex < commands.length) {
+                setTimeout(() => {
+                    const cmd = commands[commandIndex];
+                    terminalOutput.innerHTML += `\n\nisa-os> ${cmd}`;
+
+                    setTimeout(() => {
+                        switch(commandIndex) {
+                            case 0:
+                                terminalOutput.innerHTML += '\n[Help text displayed...]';
+                                break;
+                            case 1:
+                                terminalOutput.innerHTML += '\n[MODULE] 16 modules loaded';
+                                break;
+                            case 2:
+                                terminalOutput.innerHTML += '\nSystem ticks: 0x00001234\nActive agents: 5';
+                                break;
+                            case 3:
+                                terminalOutput.innerHTML += '\nSensor 0x00000000 = 0x00000042';
+                                break;
+                            case 4:
+                                terminalOutput.innerHTML += '\n[ALARM] P0x00000005: System ready';
+                                break;
+                        }
+                        commandIndex++;
+                        terminalOutput.innerHTML += '\n\nisa-os> <span style="color: #0f0;">_</span>';
+                        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+                        addCommand();
+                    }, 500);
+                }, 2000);
+            }
+        }
+
+        // Start animation after page load
+        setTimeout(addCommand, 2000);
+    </script>
+</body>
+</html>

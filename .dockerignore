@@ -1,0 +1,23 @@
+# Build artifacts
+build/
+*.o
+*.bin
+*.img
+*.elf
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation (we'll generate fresh)
+# Keep source docs

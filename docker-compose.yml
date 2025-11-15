@@ -1,0 +1,41 @@
+# ════════════════════════════════════════════════════════════════════════
+# ISA-OS Docker Compose
+# Easy deployment with docker-compose up
+# ════════════════════════════════════════════════════════════════════════
+
+version: '3.8'
+
+services:
+  isa-os:
+    build: .
+    image: teslasolar/isa-os:latest
+    container_name: isa-os
+    ports:
+      - "4444:4444"  # Serial port for web terminal
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+    # For interactive shell access
+    command: >
+      qemu-system-i386
+      -drive file=build/isa-os.img,format=raw
+      -serial tcp:0.0.0.0:4444,server,nowait
+      -nographic
+
+  # Optional: Web terminal interface
+  web-terminal:
+    image: tsl0922/ttyd:latest
+    container_name: isa-os-web
+    ports:
+      - "7681:7681"  # Web interface
+    command: >
+      ttyd -p 7681
+      nc isa-os 4444
+    depends_on:
+      - isa-os
+    restart: unless-stopped
+
+networks:
+  default:
+    name: isa-os-network
