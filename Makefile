@@ -27,11 +27,18 @@ LDFLAGS = -m elf_i386 -T $(KERNEL_DIR)/linker.ld
 BOOT_ASM = $(BOOT_DIR)/boot.asm
 KERNEL_ASM = $(KERNEL_DIR)/core/kernel.asm
 KERNEL_C = $(KERNEL_DIR)/core/kernel.c \
+           $(KERNEL_DIR)/core/module.c \
+           $(KERNEL_DIR)/core/config.c \
            $(KERNEL_DIR)/core/isaf.c \
            $(KERNEL_DIR)/core/audit.c \
            $(KERNEL_DIR)/drivers/modbus.c \
            $(KERNEL_DIR)/drivers/profinet.c \
-           $(KERNEL_DIR)/drivers/ethercat.c
+           $(KERNEL_DIR)/drivers/ethercat.c \
+           $(KERNEL_DIR)/drivers/can_bus.c \
+           $(KERNEL_DIR)/drivers/spi.c \
+           $(KERNEL_DIR)/drivers/i2c.c \
+           $(KERNEL_DIR)/services/opc_ua.c \
+           $(KERNEL_DIR)/services/mqtt.c
 
 # ── Object Files ──
 KERNEL_ASM_OBJ = $(BUILD_DIR)/kernel_asm.o
@@ -50,6 +57,7 @@ all: dirs $(IMAGE)
 dirs:
 	@mkdir -p $(BUILD_DIR)/core
 	@mkdir -p $(BUILD_DIR)/drivers
+	@mkdir -p $(BUILD_DIR)/services
 
 # ── Bootloader ──
 $(BOOT_BIN): $(BOOT_ASM)
@@ -67,6 +75,10 @@ $(BUILD_DIR)/core/%.o: $(KERNEL_DIR)/core/%.c
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/drivers/%.o: $(KERNEL_DIR)/drivers/%.c
+	@echo "[CC]  Compiling $<..."
+	$(CC) $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/services/%.o: $(KERNEL_DIR)/services/%.c
 	@echo "[CC]  Compiling $<..."
 	$(CC) $(CFLAGS) $< -o $@
 

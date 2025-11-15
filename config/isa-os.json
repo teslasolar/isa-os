@@ -1,0 +1,91 @@
+{
+  "system": {
+    "name": "ISA-OS",
+    "version": "1.0.0",
+    "scheduler": {
+      "tick_rate_hz": 1000,
+      "max_agents": 256,
+      "default_quantum": 10
+    },
+    "boot": {
+      "auto_load_modules": true,
+      "show_boot_messages": true,
+      "console_output": "vga"
+    }
+  },
+  "levels": {
+    "L0": {
+      "enabled": true,
+      "description": "Field Devices",
+      "io_update_rate_ms": 10,
+      "sensors": [
+        {
+          "id": 0,
+          "name": "Temperature",
+          "type": "analog",
+          "unit": "°C",
+          "range": [0, 200]
+        },
+        {
+          "id": 1,
+          "name": "Pressure",
+          "type": "analog",
+          "unit": "kPa",
+          "range": [0, 1000]
+        }
+      ]
+    },
+    "L1": {
+      "enabled": true,
+      "description": "Control Devices",
+      "scan_cycle_ms": 5
+    },
+    "L2": {
+      "enabled": true,
+      "description": "SCADA/HMI",
+      "alarm_buffer_size": 128,
+      "hmi_update_rate_ms": 100
+    },
+    "L3": {
+      "enabled": true,
+      "description": "Manufacturing Operations",
+      "batch_engine": "ISA-88",
+      "max_concurrent_batches": 16
+    },
+    "L4": {
+      "enabled": true,
+      "description": "Enterprise Systems",
+      "erp_integration": "enabled",
+      "sync_interval_min": 60
+    }
+  },
+  "protocols": {
+    "modbus": {
+      "enabled": true,
+      "baud_rate": 9600,
+      "timeout_ms": 1000
+    },
+    "opc_ua": {
+      "enabled": true,
+      "port": 4840,
+      "security_mode": "none"
+    },
+    "mqtt": {
+      "enabled": true,
+      "broker": "mqtt.local",
+      "port": 1883,
+      "client_id": "ISA-OS",
+      "qos": 0
+    }
+  },
+  "security": {
+    "audit_logging": {
+      "enabled": true,
+      "max_entries": 4096,
+      "integrity_check": "CRC64"
+    },
+    "regulatory": {
+      "compliance": ["21 CFR Part 11", "EU Annex 11"]
+    }
+  }
+}

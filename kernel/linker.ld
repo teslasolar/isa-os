@@ -31,6 +31,13 @@ SECTIONS
         *(.data.*)
     }
 
+    /* Module registry (auto-discovered modules) */
+    .modules ALIGN(16) : {
+        __start_modules = .;
+        *(.modules)
+        __stop_modules = .;
+    }
+
     /* Uninitialized data (BSS) */
     .bss ALIGN(16) : {
         bss_start = .;

@@ -1,0 +1,254 @@
+# ════════════════════════════════════════════════════════════════════════
+# ISA-OS Configuration File
+# YAML format for easy editing and version control
+# ════════════════════════════════════════════════════════════════════════
+
+system:
+  name: "ISA-OS"
+  version: "1.0.0"
+  scheduler:
+    tick_rate_hz: 1000        # 1ms tick
+    max_agents: 256
+    default_quantum: 10       # Time slices
+
+  boot:
+    auto_load_modules: true
+    show_boot_messages: true
+    console_output: "vga"     # vga, serial, both
+
+# ── ISA-95 Level Configuration ──
+levels:
+  L0:
+    enabled: true
+    description: "Field Devices"
+    io_update_rate_ms: 10     # 10ms cycle time
+    sensors:
+      - id: 0
+        name: "Temperature"
+        type: "analog"
+        unit: "°C"
+        range: [0, 200]
+      - id: 1
+        name: "Pressure"
+        type: "analog"
+        unit: "kPa"
+        range: [0, 1000]
+      - id: 2
+        name: "Flow"
+        type: "analog"
+        unit: "L/min"
+        range: [0, 100]
+
+  L1:
+    enabled: true
+    description: "Control Devices"
+    scan_cycle_ms: 5          # 5ms PLC scan
+    controllers:
+      - type: "PID"
+        setpoint: 50.0
+        kp: 1.2
+        ki: 0.5
+        kd: 0.1
+
+  L2:
+    enabled: true
+    description: "SCADA/HMI"
+    alarm_buffer_size: 128
+    hmi_update_rate_ms: 100
+    alarm_priorities:
+      critical: 1
+      high: 2
+      medium: 3
+      low: 4
+      info: 5
+
+  L3:
+    enabled: true
+    description: "Manufacturing Operations"
+    batch_engine: "ISA-88"
+    max_concurrent_batches: 16
+    audit_log_size: 4096
+
+  L4:
+    enabled: true
+    description: "Enterprise Systems"
+    erp_integration: "enabled"
+    sync_interval_min: 60
+
+# ── Communication Protocols ──
+protocols:
+  modbus:
+    enabled: true
+    uart_port: 0
+    baud_rate: 9600
+    parity: "none"
+    stop_bits: 1
+    timeout_ms: 1000
+
+  profinet:
+    enabled: true
+    device_name: "ISA-OS-CONTROLLER"
+    ip_address: "192.168.1.100"
+    subnet_mask: "255.255.255.0"
+    gateway: "192.168.1.1"
+
+  ethercat:
+    enabled: true
+    cycle_time_us: 1000       # 1ms cycle
+    distributed_clocks: true
+
+  can:
+    enabled: true
+    baudrate: 500000          # 500 kbps
+    loopback: false
+    silent: false
+
+  opc_ua:
+    enabled: true
+    port: 4840
+    endpoint: "opc.tcp://0.0.0.0:4840"
+    security_mode: "none"     # none, sign, sign_and_encrypt
+    max_nodes: 256
+
+  mqtt:
+    enabled: true
+    broker: "mqtt.local"
+    port: 1883
+    client_id: "ISA-OS"
+    qos: 0                    # 0, 1, or 2
+    clean_session: true
+    topics:
+      sensors: "isa-os/L0/sensors/#"
+      alarms: "isa-os/L2/alarms/#"
+      batches: "isa-os/L3/batches/#"
+
+# ── Hardware Drivers ──
+drivers:
+  spi:
+    - bus: 0
+      clock_speed: 1000000    # 1 MHz
+      mode: 0                 # CPOL=0, CPHA=0
+      bits_per_word: 8
+    - bus: 1
+      clock_speed: 4000000    # 4 MHz
+      mode: 3
+      bits_per_word: 8
+
+  i2c:
+    - bus: 0
+      clock_speed: 100000     # 100 kHz standard mode
+      addressing: "7-bit"
+    - bus: 1
+      clock_speed: 400000     # 400 kHz fast mode
+      addressing: "7-bit"
+
+  uart:
+    - port: 0
+      baud_rate: 115200
+      data_bits: 8
+      parity: "none"
+      stop_bits: 1
+    - port: 1
+      baud_rate: 9600
+      data_bits: 8
+      parity: "even"
+      stop_bits: 1
+
+# ── Security & Compliance ──
+security:
+  audit_logging:
+    enabled: true
+    max_entries: 4096
+    integrity_check: "CRC64"
+    export_format: "CSV"
+
+  alarm_management:
+    standard: "ISA-18.2"
+    acknowledgment_required: true
+    shelving_enabled: true
+    max_active_alarms: 128
+
+  user_management:
+    enabled: false            # Future feature
+    password_policy: "strong"
+    session_timeout_min: 30
+
+  regulatory:
+    compliance: ["21 CFR Part 11", "EU Annex 11"]
+    validation: "enabled"
+    signature_required: false
+
+# ── Modules ──
+modules:
+  auto_load: true
+  search_paths:
+    - "/modules/drivers"
+    - "/modules/services"
+    - "/modules/agents"
+
+  load_order:
+    - config_system
+    - i2c
+    - spi
+    - can_bus
+    - modbus
+    - profinet
+    - ethercat
+    - opc_ua
+    - mqtt
+
+# ── Filesystem ──
+filesystem:
+  type: "ISA-FS"
+  block_size: 4096
+  max_files: 1024
+  mount_points:
+    - path: "/L0"
+      owner_level: "L0"
+    - path: "/L1"
+      owner_level: "L1"
+    - path: "/L2"
+      owner_level: "L2"
+    - path: "/L3"
+      owner_level: "L3"
+    - path: "/L4"
+      owner_level: "L4"
+
+# ── Network ──
+network:
+  hostname: "isa-os-controller"
+  ipv4:
+    enabled: true
+    dhcp: false
+    address: "192.168.1.100"
+    netmask: "255.255.255.0"
+    gateway: "192.168.1.1"
+    dns: ["8.8.8.8", "8.8.4.4"]
+
+  ipv6:
+    enabled: false
+
+# ── Performance & Tuning ──
+performance:
+  real_time:
+    enabled: true
+    max_jitter_us: 1000       # 1ms max jitter
+    priority_levels: 10
+
+  memory:
+    kernel_stack_size: 16384  # 16KB
+    agent_stack_size: 4096    # 4KB per agent
+    heap_size: 1048576        # 1MB heap
+
+  optimization:
+    level: "O2"               # -O0, -O1, -O2, -O3, -Os
+    lto: false                # Link-time optimization
+
+# ── Debugging ──
+debug:
+  enabled: false
+  log_level: "INFO"           # TRACE, DEBUG, INFO, WARN, ERROR
+  console_output: true
+  serial_output: true
+  gdb_stub: false
+  gdb_port: 1234

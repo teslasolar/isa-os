@@ -1,0 +1,143 @@
+{
+  "manifest_version": "1.0",
+  "os": {
+    "name": "ISA-OS",
+    "version": "1.0.0",
+    "build_date": "2025-11-15",
+    "architecture": "x86_32",
+    "kernel_size_kb": 1200
+  },
+  "modules": [
+    {
+      "name": "config_system",
+      "type": "service",
+      "version": "1.0.0",
+      "level": "core",
+      "file": "kernel/core/config.c",
+      "status": "active"
+    },
+    {
+      "name": "module_system",
+      "type": "service",
+      "version": "1.0.0",
+      "level": "core",
+      "file": "kernel/core/module.c",
+      "status": "active"
+    },
+    {
+      "name": "audit",
+      "type": "service",
+      "version": "1.0.0",
+      "level": "core",
+      "file": "kernel/core/audit.c",
+      "status": "active"
+    },
+    {
+      "name": "isaf",
+      "type": "filesystem",
+      "version": "1.0.0",
+      "level": "core",
+      "file": "kernel/core/isaf.c",
+      "status": "active"
+    },
+    {
+      "name": "modbus",
+      "type": "driver",
+      "version": "1.0.0",
+      "level": "L0",
+      "file": "kernel/drivers/modbus.c",
+      "status": "active"
+    },
+    {
+      "name": "profinet",
+      "type": "driver",
+      "version": "1.0.0",
+      "level": "L0",
+      "file": "kernel/drivers/profinet.c",
+      "status": "active"
+    },
+    {
+      "name": "ethercat",
+      "type": "driver",
+      "version": "1.0.0",
+      "level": "L0",
+      "file": "kernel/drivers/ethercat.c",
+      "status": "active"
+    },
+    {
+      "name": "can_bus",
+      "type": "driver",
+      "version": "1.0.0",
+      "level": "L0",
+      "file": "kernel/drivers/can_bus.c",
+      "status": "active"
+    },
+    {
+      "name": "spi",
+      "type": "driver",
+      "version": "1.0.0",
+      "level": "L0",
+      "file": "kernel/drivers/spi.c",
+      "status": "active"
+    },
+    {
+      "name": "i2c",
+      "type": "driver",
+      "version": "1.0.0",
+      "level": "L0",
+      "file": "kernel/drivers/i2c.c",
+      "status": "active"
+    },
+    {
+      "name": "opc_ua",
+      "type": "protocol",
+      "version": "1.0.0",
+      "level": "L2",
+      "file": "kernel/services/opc_ua.c",
+      "status": "active"
+    },
+    {
+      "name": "mqtt",
+      "type": "protocol",
+      "version": "1.0.0",
+      "level": "L2",
+      "file": "kernel/services/mqtt.c",
+      "status": "active"
+    }
+  ],
+  "standards": [
+    {
+      "name": "ISA-95",
+      "version": "ANSI/ISA-95.00.01-2010",
+      "description": "Enterprise-Control System Integration"
+    },
+    {
+      "name": "ISA-88",
+      "version": "ANSI/ISA-88.00.01-2010",
+      "description": "Batch Control"
+    },
+    {
+      "name": "ISA-18.2",
+      "version": "ANSI/ISA-18.2-2016",
+      "description": "Alarm Management"
+    },
+    {
+      "name": "21 CFR Part 11",
+      "version": "FDA",
+      "description": "Electronic Records and Signatures"
+    }
+  ],
+  "capabilities": [
+    "real-time scheduling",
+    "ISA-95 native levels",
+    "agent-based architecture",
+    "industrial protocols",
+    "audit logging",
+    "modular system"
+  ],
+  "checksums": {
+    "boot.bin": "sha256:pending",
+    "kernel.bin": "sha256:pending",
+    "isa-os.img": "sha256:pending"
+  }
+}
