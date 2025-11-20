@@ -32,6 +32,9 @@ KERNEL_C = $(KERNEL_DIR)/core/kernel.c \
            $(KERNEL_DIR)/core/memory.c \
            $(KERNEL_DIR)/core/isaf.c \
            $(KERNEL_DIR)/core/audit.c \
+           $(KERNEL_DIR)/core/error.c \
+           $(KERNEL_DIR)/core/agent.c \
+           $(KERNEL_DIR)/core/watchdog.c \
            $(KERNEL_DIR)/drivers/modbus.c \
            $(KERNEL_DIR)/drivers/profinet.c \
            $(KERNEL_DIR)/drivers/ethercat.c \
@@ -41,8 +44,7 @@ KERNEL_C = $(KERNEL_DIR)/core/kernel.c \
            $(KERNEL_DIR)/drivers/rtc.c \
            $(KERNEL_DIR)/services/opc_ua.c \
            $(KERNEL_DIR)/services/mqtt.c \
-           $(KERNEL_DIR)/services/shell.c \
-           $(KERNEL_DIR)/services/watchdog.c
+           $(KERNEL_DIR)/services/shell.c
 
 # ── Object Files ──
 KERNEL_ASM_OBJ = $(BUILD_DIR)/kernel_asm.o

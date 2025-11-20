@@ -1,0 +1,46 @@
+# ISA-OS GitHub Pages Configuration
+
+title: ISA-OS
+description: Industrial Automation Operating System with native ISA-95 level support
+url: https://teslasolar.github.io/isa-os
+
+# Theme (using default GitHub Pages theme)
+theme: jekyll-theme-minimal
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Exclude from processing
+exclude:
+  - build/
+  - boot/
+  - kernel/
+  - userspace/
+  - scripts/
+  - Makefile
+  - Dockerfile
+  - docker-compose.yml
+  - .git/
+  - .github/
+  - .gitignore
+  - .dockerignore
+
+# Include files
+include:
+  - _config.yml
+
+# Plugins
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# SEO
+author: ISA-OS Project
+social:
+  name: ISA-OS
+  links:
+    - https://github.com/teslasolar/isa-os
+
+# Google Analytics (optional - add your tracking ID)
+# google_analytics: UA-XXXXXXXXX-X

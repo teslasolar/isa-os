@@ -50,31 +50,44 @@ kernel_entry:
 ; void ctx_switch(uint32_t **old_sp, uint32_t **new_sp)
 ; ────────────────────────────────────────────────────────────────────────
 ctx_switch:
-    push ebp
-    mov ebp, esp
+    ; Save old context (if old_sp is not NULL)
+    mov eax, [esp + 4]          ; old_sp pointer
+    test eax, eax
+    jz .load_new                ; Skip save if NULL
 
     ; Save all general purpose registers
-    push ebx
-    push esi
+    pushf                       ; EFLAGS
+    push ebp
     push edi
-    pushf                       ; Save flags
+    push esi
+    push edx
+    push ecx
+    push ebx
+    push eax                    ; Save EAX too
 
-    ; Get parameters
-    mov eax, [ebp + 8]          ; old_sp pointer
-    mov edx, [ebp + 12]         ; new_sp pointer
+    ; Save current stack pointer to *old_sp
+    mov eax, [esp + 36]         ; Get old_sp again (after pushes)
+    mov [eax], esp              ; Save current ESP
 
-    ; Save current stack pointer
-    mov [eax], esp
+.load_new:
+    ; Load new context
+    mov eax, [esp + 40]         ; new_sp pointer (or +8 if we skipped save)
+    cmp dword [esp + 4], 0      ; Check if we skipped save
+    jne .after_load_adjust
+    mov eax, [esp + 8]          ; Adjust offset if skipped
 
-    ; Load new stack pointer
-    mov esp, [edx]
+.after_load_adjust:
+    mov esp, [eax]              ; Load new ESP
 
-    ; Restore context
-    popf
-    pop edi
-    pop esi
+    ; Restore all registers
+    pop eax
     pop ebx
+    pop ecx
+    pop edx
+    pop esi
+    pop edi
     pop ebp
+    popf
 
     ret
 

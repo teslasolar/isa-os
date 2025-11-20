@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISA-OS Documentation Viewer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* GitHub Pages Header */
+        .gh-header {
+            background: #1e293b;
+            color: white;
+            padding: 0.5rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+            border-bottom: 2px solid #3b82f6;
+            flex-shrink: 0;
+        }
+
+        .gh-header a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .gh-header a:hover {
+            text-decoration: underline;
+        }
+
+        .gh-header i {
+            margin-right: 0.25rem;
+        }
+
+        /* Main Container */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: #f1f5f9;
+            border-right: 1px solid #e2e8f0;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            background: #2563eb;
+            color: white;
+            font-weight: 600;
+        }
+
+        .doc-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .doc-category {
+            padding: 0.75rem 1rem;
+            background: #cbd5e1;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            color: #334155;
+        }
+
+        .doc-item {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .doc-item:hover {
+            background: #e2e8f0;
+        }
+
+        .doc-item.active {
+            background: #3b82f6;
+            color: white;
+            font-weight: 600;
+        }
+
+        .doc-item i {
+            margin-right: 0.5rem;
+            color: #64748b;
+        }
+
+        .doc-item.active i {
+            color: white;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            background: white;
+        }
+
+        .content-header {
+            padding: 1.5rem 2rem;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content-header h1 {
+            font-size: 1.75rem;
+            color: #1e293b;
+        }
+
+        .content-body {
+            padding: 2rem;
+        }
+
+        .markdown-body {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 4rem;
+            color: #64748b;
+        }
+
+        .loading i {
+            font-size: 3rem;
+            color: #3b82f6;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: absolute;
+                left: -300px;
+                height: 100%;
+                z-index: 1000;
+                transition: left 0.3s;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .menu-toggle {
+                position: fixed;
+                bottom: 2rem;
+                right: 2rem;
+                width: 56px;
+                height: 56px;
+                border-radius: 50%;
+                background: #3b82f6;
+                color: white;
+                border: none;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                cursor: pointer;
+                z-index: 999;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- GitHub Pages Header -->
+    <div class="gh-header">
+        <div>
+            <i class="fas fa-home"></i>
+            <a href="../../index.html">← Back to ISA-OS Home</a>
+        </div>
+        <div>
+            <i class="fas fa-book"></i>
+            Documentation Viewer | Route through
+            <a href="../../index.html">root index.html</a>
+        </div>
+        <div>
+            <a href="https://github.com/teslasolar/isa-os" target="_blank">
+                <i class="fab fa-github"></i> View on GitHub
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-book-open"></i> Documentation
+            </div>
+            <ul class="doc-list">
+                <li class="doc-category">Getting Started</li>
+                <li class="doc-item" onclick="loadDoc('../../README.md', 'README')">
+                    <i class="fas fa-home"></i> README
+                </li>
+                <li class="doc-item" onclick="loadDoc('../../QUICKSTART.md', 'Quick Start')">
+                    <i class="fas fa-rocket"></i> Quick Start
+                </li>
+
+                <li class="doc-category">Architecture</li>
+                <li class="doc-item" onclick="loadDoc('../../ARCHITECTURE.md', 'Architecture')">
+                    <i class="fas fa-sitemap"></i> Architecture
+                </li>
+                <li class="doc-item" onclick="loadDoc('../../MODULES.md', 'Modules')">
+                    <i class="fas fa-puzzle-piece"></i> Modules
+                </li>
+
+                <li class="doc-category">RFC Specifications</li>
+                <li class="doc-item" onclick="loadDoc('../rfcs/RFC-001-ISA-HAL.md', 'RFC-001: ISA-HAL')">
+                    <i class="fas fa-microchip"></i> RFC-001: ISA-HAL
+                </li>
+                <li class="doc-item" onclick="loadDoc('../rfcs/RFC-002-ISA-RT.md', 'RFC-002: ISA-RT')">
+                    <i class="fas fa-clock"></i> RFC-002: ISA-RT
+                </li>
+                <li class="doc-item" onclick="loadDoc('../rfcs/RFC-003-ISA-SEC.md', 'RFC-003: ISA-SEC')">
+                    <i class="fas fa-shield-alt"></i> RFC-003: ISA-SEC
+                </li>
+
+                <li class="doc-category">Development</li>
+                <li class="doc-item" onclick="loadDoc('../../CHANGELOG.md', 'Changelog')">
+                    <i class="fas fa-list-ul"></i> Changelog
+                </li>
+                <li class="doc-item" onclick="loadDoc('../PHASE1-SUMMARY.md', 'Phase 1 Summary')">
+                    <i class="fas fa-check-square"></i> Phase 1 Summary
+                </li>
+                <li class="doc-item" onclick="loadDoc('../../INDEX.md', 'File Index')">
+                    <i class="fas fa-folder-open"></i> File Index
+                </li>
+
+                <li class="doc-category">Deployment</li>
+                <li class="doc-item" onclick="loadDoc('../../DOCKER.md', 'Docker Guide')">
+                    <i class="fab fa-docker"></i> Docker Guide
+                </li>
+            </ul>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <div class="content-header">
+                <h1 id="doc-title">ISA-OS Documentation</h1>
+                <div>
+                    <a href="terminal.html" style="text-decoration: none; color: #3b82f6; margin-right: 1rem;">
+                        <i class="fas fa-terminal"></i> Terminal
+                    </a>
+                    <a href="https://github.com/teslasolar/isa-os" target="_blank" style="text-decoration: none; color: #3b82f6;">
+                        <i class="fab fa-github"></i> GitHub
+                    </a>
+                </div>
+            </div>
+            <div class="content-body">
+                <div class="markdown-body" id="content">
+                    <div class="loading">
+                        <i class="fas fa-spinner"></i>
+                        <p style="margin-top: 1rem;">Select a document from the sidebar</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="menu-toggle" onclick="toggleSidebar()" style="display: none;">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <script>
+        const contentDiv = document.getElementById('content');
+        const docTitle = document.getElementById('doc-title');
+
+        async function loadDoc(path, title) {
+            // Update title
+            docTitle.textContent = title;
+
+            // Show loading
+            contentDiv.innerHTML = `
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                    <p style="margin-top: 1rem;">Loading ${title}...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(path);
+                if (!response.ok) throw new Error('Failed to load document');
+
+                const markdown = await response.text();
+                const html = marked.parse(markdown);
+                contentDiv.innerHTML = html;
+
+                // Update active item
+                document.querySelectorAll('.doc-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                event.target.closest('.doc-item').classList.add('active');
+
+                // Scroll to top
+                document.querySelector('.content-area').scrollTop = 0;
+
+            } catch (error) {
+                contentDiv.innerHTML = `
+                    <div style="text-align: center; padding: 4rem; color: #ef4444;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <p><strong>Error loading document</strong></p>
+                        <p style="margin-top: 0.5rem; color: #64748b;">${error.message}</p>
+                        <p style="margin-top: 1rem;">
+                            <a href="https://github.com/teslasolar/isa-os/tree/main" target="_blank" style="color: #3b82f6;">
+                                View on GitHub →
+                            </a>
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        // Show menu toggle on mobile
+        if (window.innerWidth <= 768) {
+            document.querySelector('.menu-toggle').style.display = 'block';
+        }
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth <= 768) {
+                document.querySelector('.menu-toggle').style.display = 'block';
+            } else {
+                document.querySelector('.menu-toggle').style.display = 'none';
+            }
+        });
+
+        // Load README by default
+        window.addEventListener('load', () => {
+            // Simulate click on README
+            const readmeItem = document.querySelector('.doc-item');
+            if (readmeItem) {
+                readmeItem.click();
+            }
+        });
+    </script>
+</body>
+</html>
