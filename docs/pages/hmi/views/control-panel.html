@@ -1,0 +1,555 @@
+<div class="view-header">
+    <h1 class="view-title">
+        <i class="fas fa-sliders-h"></i> Control Panel
+    </h1>
+    <div class="view-actions">
+        <button class="btn btn-secondary" id="lock-btn">
+            <i class="fas fa-lock"></i> Lock Controls
+        </button>
+        <button class="btn btn-primary">
+            <i class="fas fa-save"></i> Save Configuration
+        </button>
+    </div>
+</div>
+
+<style>
+    .control-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .control-card {
+        background: #1e293b;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid #334155;
+    }
+
+    .control-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .control-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .control-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-online {
+        background: #10b98133;
+        color: #10b981;
+    }
+
+    .status-offline {
+        background: #64748b33;
+        color: #64748b;
+    }
+
+    /* Slider Control */
+    .slider-control {
+        margin: 1.5rem 0;
+    }
+
+    .slider-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+        color: #cbd5e1;
+    }
+
+    .slider-value {
+        font-weight: bold;
+        color: #10b981;
+    }
+
+    input[type="range"] {
+        width: 100%;
+        height: 8px;
+        border-radius: 5px;
+        background: #334155;
+        outline: none;
+        -webkit-appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #10b981;
+        cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #10b981;
+        cursor: pointer;
+        border: none;
+    }
+
+    /* Toggle Switch */
+    .toggle-control {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: #334155;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+    }
+
+    .toggle-label {
+        color: #cbd5e1;
+    }
+
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #64748b;
+        transition: .4s;
+        border-radius: 24px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked + .slider {
+        background-color: #10b981;
+    }
+
+    input:checked + .slider:before {
+        transform: translateX(26px);
+    }
+
+    /* Button Group */
+    .button-group {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+        margin: 1rem 0;
+    }
+
+    .control-btn {
+        padding: 1rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .control-btn i {
+        font-size: 1.5rem;
+    }
+
+    .btn-start {
+        background: #10b98133;
+        color: #10b981;
+        border: 1px solid #10b981;
+    }
+
+    .btn-start:hover {
+        background: #10b981;
+        color: white;
+    }
+
+    .btn-stop {
+        background: #ef444433;
+        color: #ef4444;
+        border: 1px solid #ef4444;
+    }
+
+    .btn-stop:hover {
+        background: #ef4444;
+        color: white;
+    }
+
+    .btn-pause {
+        background: #f59e0b33;
+        color: #f59e0b;
+        border: 1px solid #f59e0b;
+    }
+
+    .btn-pause:hover {
+        background: #f59e0b;
+        color: white;
+    }
+
+    .btn-reset {
+        background: #3b82f633;
+        color: #3b82f6;
+        border: 1px solid #3b82f6;
+    }
+
+    .btn-reset:hover {
+        background: #3b82f6;
+        color: white;
+    }
+
+    /* Gauge Display */
+    .gauge-display {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        padding: 1.5rem;
+        background: #334155;
+        border-radius: 8px;
+        margin-top: 1rem;
+    }
+
+    .gauge-item {
+        text-align: center;
+    }
+
+    .gauge-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #10b981;
+    }
+
+    .gauge-label {
+        font-size: 0.875rem;
+        color: #94a3b8;
+        margin-top: 0.5rem;
+    }
+</style>
+
+<div class="control-grid">
+    <!-- Pump Control -->
+    <div class="control-card">
+        <div class="control-header">
+            <div class="control-title">
+                <i class="fas fa-fan"></i>
+                Pump P-101
+            </div>
+            <span class="control-status status-online">ONLINE</span>
+        </div>
+
+        <div class="button-group">
+            <button class="control-btn btn-start" onclick="controlPump('start')">
+                <i class="fas fa-play"></i>
+                Start
+            </button>
+            <button class="control-btn btn-stop" onclick="controlPump('stop')">
+                <i class="fas fa-stop"></i>
+                Stop
+            </button>
+        </div>
+
+        <div class="slider-control">
+            <div class="slider-label">
+                <span>Speed Setpoint</span>
+                <span class="slider-value"><span id="pump-speed">75</span>%</span>
+            </div>
+            <input type="range" min="0" max="100" value="75" id="pump-speed-slider"
+                   oninput="updateValue('pump-speed', this.value)">
+        </div>
+
+        <div class="gauge-display">
+            <div class="gauge-item">
+                <div class="gauge-value" id="pump-actual-speed">1450</div>
+                <div class="gauge-label">RPM</div>
+            </div>
+            <div class="gauge-item">
+                <div class="gauge-value" id="pump-current">12.5</div>
+                <div class="gauge-label">Amps</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Valve Control -->
+    <div class="control-card">
+        <div class="control-header">
+            <div class="control-title">
+                <i class="fas fa-compress-arrows-alt"></i>
+                Control Valve V-101
+            </div>
+            <span class="control-status status-online">ONLINE</span>
+        </div>
+
+        <div class="slider-control">
+            <div class="slider-label">
+                <span>Position</span>
+                <span class="slider-value"><span id="valve-pos">85</span>%</span>
+            </div>
+            <input type="range" min="0" max="100" value="85" id="valve-pos-slider"
+                   oninput="updateValue('valve-pos', this.value)">
+        </div>
+
+        <div class="toggle-control">
+            <span class="toggle-label">Auto Mode</span>
+            <label class="switch">
+                <input type="checkbox" checked onchange="toggleAutoMode('valve', this.checked)">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="gauge-display">
+            <div class="gauge-item">
+                <div class="gauge-value" id="valve-feedback">85</div>
+                <div class="gauge-label">Position (%)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Temperature Control -->
+    <div class="control-card">
+        <div class="control-header">
+            <div class="control-title">
+                <i class="fas fa-thermometer-half"></i>
+                Temperature Controller TC-101
+            </div>
+            <span class="control-status status-online">ONLINE</span>
+        </div>
+
+        <div class="slider-control">
+            <div class="slider-label">
+                <span>Setpoint</span>
+                <span class="slider-value"><span id="temp-sp">75</span>°C</span>
+            </div>
+            <input type="range" min="0" max="150" value="75" id="temp-sp-slider"
+                   oninput="updateValue('temp-sp', this.value)">
+        </div>
+
+        <div class="toggle-control">
+            <span class="toggle-label">PID Control</span>
+            <label class="switch">
+                <input type="checkbox" checked onchange="togglePID(this.checked)">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="gauge-display">
+            <div class="gauge-item">
+                <div class="gauge-value" id="temp-pv">72.3</div>
+                <div class="gauge-label">Process (°C)</div>
+            </div>
+            <div class="gauge-item">
+                <div class="gauge-value" id="temp-output">45</div>
+                <div class="gauge-label">Output (%)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batch Control -->
+    <div class="control-card">
+        <div class="control-header">
+            <div class="control-title">
+                <i class="fas fa-tasks"></i>
+                Batch Control (ISA-88)
+            </div>
+            <span class="control-status status-online">RUNNING</span>
+        </div>
+
+        <div class="button-group">
+            <button class="control-btn btn-start" onclick="batchControl('start')">
+                <i class="fas fa-play"></i>
+                Start Batch
+            </button>
+            <button class="control-btn btn-pause" onclick="batchControl('pause')">
+                <i class="fas fa-pause"></i>
+                Pause
+            </button>
+            <button class="control-btn btn-stop" onclick="batchControl('stop')">
+                <i class="fas fa-stop"></i>
+                Stop
+            </button>
+            <button class="control-btn btn-reset" onclick="batchControl('reset')">
+                <i class="fas fa-redo"></i>
+                Reset
+            </button>
+        </div>
+
+        <div class="gauge-display">
+            <div class="gauge-item">
+                <div class="gauge-value" id="batch-phase">3</div>
+                <div class="gauge-label">Current Phase</div>
+            </div>
+            <div class="gauge-item">
+                <div class="gauge-value" id="batch-progress">65</div>
+                <div class="gauge-label">Progress (%)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Motor Control -->
+    <div class="control-card">
+        <div class="control-header">
+            <div class="control-title">
+                <i class="fas fa-cog"></i>
+                Agitator Motor M-101
+            </div>
+            <span class="control-status status-online">ONLINE</span>
+        </div>
+
+        <div class="button-group">
+            <button class="control-btn btn-start" onclick="motorControl('start')">
+                <i class="fas fa-play"></i>
+                Start
+            </button>
+            <button class="control-btn btn-stop" onclick="motorControl('stop')">
+                <i class="fas fa-stop"></i>
+                Stop
+            </button>
+        </div>
+
+        <div class="slider-control">
+            <div class="slider-label">
+                <span>Speed</span>
+                <span class="slider-value"><span id="motor-speed">60</span>%</span>
+            </div>
+            <input type="range" min="0" max="100" value="60" id="motor-speed-slider"
+                   oninput="updateValue('motor-speed', this.value)">
+        </div>
+
+        <div class="gauge-display">
+            <div class="gauge-item">
+                <div class="gauge-value" id="motor-rpm">850</div>
+                <div class="gauge-label">RPM</div>
+            </div>
+            <div class="gauge-item">
+                <div class="gauge-value" id="motor-torque">78</div>
+                <div class="gauge-label">Torque (%)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emergency Controls -->
+    <div class="control-card" style="border: 2px solid #ef4444;">
+        <div class="control-header">
+            <div class="control-title">
+                <i class="fas fa-exclamation-triangle"></i>
+                Emergency Controls
+            </div>
+            <span class="control-status status-online">ARMED</span>
+        </div>
+
+        <button class="control-btn btn-stop" style="width: 100%; padding: 2rem; font-size: 1.25rem;"
+                onclick="emergencyStop()">
+            <i class="fas fa-hand-paper" style="font-size: 3rem;"></i>
+            EMERGENCY STOP
+        </button>
+
+        <div class="toggle-control" style="margin-top: 1rem;">
+            <span class="toggle-label">Safe State Mode</span>
+            <label class="switch">
+                <input type="checkbox" onchange="toggleSafeMode(this.checked)">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateValue(elementId, value) {
+        document.getElementById(elementId).textContent = value;
+    }
+
+    function controlPump(action) {
+        console.log('Pump action:', action);
+        alert(`Pump P-101: ${action.toUpperCase()}`);
+    }
+
+    function toggleAutoMode(device, enabled) {
+        console.log(`${device} auto mode:`, enabled);
+        alert(`Auto mode ${enabled ? 'enabled' : 'disabled'} for ${device}`);
+    }
+
+    function togglePID(enabled) {
+        console.log('PID control:', enabled);
+        alert(`PID control ${enabled ? 'enabled' : 'disabled'}`);
+    }
+
+    function batchControl(action) {
+        console.log('Batch action:', action);
+        alert(`Batch ${action.toUpperCase()}`);
+    }
+
+    function motorControl(action) {
+        console.log('Motor action:', action);
+        alert(`Motor M-101: ${action.toUpperCase()}`);
+    }
+
+    function emergencyStop() {
+        if (confirm('CONFIRM EMERGENCY STOP?\n\nThis will halt all processes immediately.')) {
+            alert('EMERGENCY STOP ACTIVATED\nAll processes stopped');
+            console.log('EMERGENCY STOP');
+        }
+    }
+
+    function toggleSafeMode(enabled) {
+        console.log('Safe state mode:', enabled);
+        alert(`Safe state mode ${enabled ? 'enabled' : 'disabled'}`);
+    }
+
+    // Simulate live data updates
+    function updateLiveData() {
+        document.getElementById('pump-actual-speed').textContent =
+            (1400 + Math.random() * 100).toFixed(0);
+        document.getElementById('pump-current').textContent =
+            (12 + Math.random() * 2).toFixed(1);
+        document.getElementById('temp-pv').textContent =
+            (70 + Math.random() * 5).toFixed(1);
+        document.getElementById('temp-output').textContent =
+            (40 + Math.random() * 10).toFixed(0);
+        document.getElementById('motor-rpm').textContent =
+            (800 + Math.random() * 100).toFixed(0);
+        document.getElementById('motor-torque').textContent =
+            (75 + Math.random() * 10).toFixed(0);
+    }
+
+    setInterval(updateLiveData, 2000);
+
+    function init_control_panel() {
+        updateLiveData();
+    }
+
+    window.init_control_panel = init_control_panel;
+</script>

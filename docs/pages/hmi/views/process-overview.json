@@ -1,0 +1,121 @@
+{
+  "name": "process-overview",
+  "title": "Process Overview",
+  "description": "Real-time process visualization and monitoring",
+  "header": {
+    "title": "Process Overview",
+    "icon": "fas fa-industry",
+    "actions": [
+      {
+        "label": "Refresh",
+        "icon": "fas fa-sync-alt",
+        "action": "refreshView",
+        "style": "secondary"
+      },
+      {
+        "label": "Export",
+        "icon": "fas fa-download",
+        "action": "exportData",
+        "style": "primary",
+        "params": {
+          "filename": "process_overview.csv"
+        }
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "grid",
+      "columns": 4,
+      "items": [
+        {
+          "type": "metric",
+          "label": "Temperature",
+          "binding": "process.temperature",
+          "unit": "°C",
+          "className": "border-left-danger"
+        },
+        {
+          "type": "metric",
+          "label": "Pressure",
+          "binding": "process.pressure",
+          "unit": "bar",
+          "className": "border-left-primary"
+        },
+        {
+          "type": "metric",
+          "label": "Flow Rate",
+          "binding": "process.flow",
+          "unit": "L/min",
+          "className": "border-left-success"
+        },
+        {
+          "type": "metric",
+          "label": "Tank Level",
+          "binding": "process.level",
+          "unit": "%",
+          "className": "border-left-warning"
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "columns": 3,
+      "items": [
+        {
+          "type": "tank",
+          "label": "Feed Tank T-101",
+          "binding": "process.tank1.level",
+          "color": "#3b82f6",
+          "width": 120,
+          "height": 200
+        },
+        {
+          "type": "tank",
+          "label": "Reactor R-101",
+          "binding": "process.tank2.level",
+          "color": "#f59e0b",
+          "width": 120,
+          "height": 200
+        },
+        {
+          "type": "tank",
+          "label": "Product Tank T-102",
+          "binding": "process.tank3.level",
+          "color": "#10b981",
+          "width": 120,
+          "height": 200
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Equipment Status",
+      "icon": "fas fa-cogs",
+      "components": [
+        {
+          "type": "grid",
+          "columns": 3,
+          "items": [
+            {
+              "type": "status",
+              "label": "Pump P-101",
+              "binding": "equipment.pump1.status"
+            },
+            {
+              "type": "status",
+              "label": "Valve V-101",
+              "binding": "equipment.valve1.status"
+            },
+            {
+              "type": "status",
+              "label": "Motor M-101",
+              "binding": "equipment.motor1.status"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "onInit": "console.log('[View] Process Overview initialized'); HMI.setData('process.tank1.level', 65); HMI.setData('process.tank2.level', 45); HMI.setData('process.tank3.level', 80); HMI.setData('equipment.pump1.status', 'running'); HMI.setData('equipment.valve1.status', 'running'); HMI.setData('equipment.motor1.status', 'warning');"
+}

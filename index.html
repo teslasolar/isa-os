@@ -442,7 +442,10 @@
         </div>
 
         <div class="cta-buttons">
-            <a href="#sandbox" class="btn btn-primary">
+            <a href="docs/pages/hmi.html" class="btn btn-primary">
+                <i class="fas fa-desktop"></i> Launch HMI
+            </a>
+            <a href="#sandbox" class="btn btn-secondary">
                 <i class="fas fa-play"></i> Try Sandbox
             </a>
             <a href="#docs" class="btn btn-secondary">
@@ -582,9 +585,12 @@ Type 'help' for available commands.
 
             <div style="margin-top: 2rem; text-align: center;">
                 <p><strong>Try these commands:</strong> help, modules, agents, stats, l0 read 0, config, clear</p>
-                <p style="margin-top: 0.5rem;">
+                <p style="margin-top: 0.5rem; display: flex; gap: 1rem; justify-content: center;">
                     <a href="docs/pages/terminal.html" class="btn btn-primary">
-                        <i class="fas fa-external-link-alt"></i> Full Terminal
+                        <i class="fas fa-terminal"></i> Full Terminal
+                    </a>
+                    <a href="docs/pages/hmi.html" class="btn btn-primary" style="background: var(--success);">
+                        <i class="fas fa-desktop"></i> HMI Dashboard
                     </a>
                 </p>
             </div>
@@ -662,6 +668,12 @@ Type 'help' for available commands.
                     <h3><i class="fas fa-folder-open"></i> File Index</h3>
                     <p>Complete file listing</p>
                     <a href="INDEX.md">Browse Files →</a>
+                </div>
+
+                <div class="doc-card" style="border: 2px solid var(--success); background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));">
+                    <h3><i class="fas fa-desktop"></i> HMI Dashboard</h3>
+                    <p>Perspective-style industrial HMI</p>
+                    <a href="docs/pages/hmi.html" style="color: var(--success); font-weight: bold;">Launch HMI →</a>
                 </div>
 
                 <div class="doc-card">

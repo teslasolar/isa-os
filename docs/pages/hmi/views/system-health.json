@@ -1,0 +1,113 @@
+{
+  "name": "system-health",
+  "title": "System Health",
+  "description": "ISA-OS system monitoring and diagnostics",
+  "header": {
+    "title": "System Health",
+    "icon": "fas fa-heartbeat",
+    "actions": [
+      {
+        "label": "Run Diagnostics",
+        "icon": "fas fa-stethoscope",
+        "action": "runDiagnostics",
+        "style": "secondary"
+      },
+      {
+        "label": "Export Report",
+        "icon": "fas fa-file-medical",
+        "action": "exportData",
+        "style": "primary",
+        "params": {
+          "filename": "system_health.txt"
+        }
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "grid",
+      "columns": "auto-fit",
+      "items": [
+        {
+          "type": "metric",
+          "label": "System Uptime",
+          "value": "72h 15m"
+        },
+        {
+          "type": "metric",
+          "label": "CPU Load",
+          "binding": "system.cpu",
+          "unit": "%"
+        },
+        {
+          "type": "metric",
+          "label": "Memory Usage",
+          "binding": "system.memory",
+          "unit": "KB"
+        },
+        {
+          "type": "metric",
+          "label": "Active Agents",
+          "value": "15"
+        },
+        {
+          "type": "metric",
+          "label": "Active Alarms",
+          "value": "3"
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "columns": 2,
+      "items": [
+        {
+          "type": "gauge",
+          "label": "CPU Usage",
+          "binding": "system.cpu",
+          "min": 0,
+          "max": 100,
+          "unit": "%"
+        },
+        {
+          "type": "gauge",
+          "label": "Memory Usage",
+          "binding": "system.memory",
+          "min": 0,
+          "max": 2048,
+          "unit": "KB"
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Agent Status (ISA-95 Levels)",
+      "icon": "fas fa-robot",
+      "components": [
+        {
+          "type": "table",
+          "columns": [
+            { "label": "Agent", "field": "name" },
+            { "label": "Level", "field": "level" },
+            { "label": "Status", "field": "status", "render": "return `<span class='badge badge-${value === 'Running' ? 'success' : 'secondary'}'>${value}</span>`;" },
+            { "label": "CPU", "field": "cpu", "render": "return value + '%';" }
+          ],
+          "data": [
+            { "name": "Modbus Master", "level": "L0", "status": "Running", "cpu": 5 },
+            { "name": "PID Controller", "level": "L1", "status": "Running", "cpu": 12 },
+            { "name": "SCADA Server", "level": "L2", "status": "Running", "cpu": 10 },
+            { "name": "MES Interface", "level": "L3", "status": "Running", "cpu": 7 },
+            { "name": "ERP Connector", "level": "L4", "status": "Suspended", "cpu": 0 }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "alarmList",
+      "title": "Recent System Alerts",
+      "binding": "system.alarms",
+      "maxHeight": "300px"
+    }
+  ],
+  "onInit": "console.log('[View] System Health initialized'); HMI.setData('system.alarms', [{priority: 'warning', source: 'L0', message: 'Sensor T-101 communication timeout', timestamp: Date.now() - 60000}, {priority: 'info', source: 'L2', message: 'SCADA client connected', timestamp: Date.now() - 120000}]);"
+}

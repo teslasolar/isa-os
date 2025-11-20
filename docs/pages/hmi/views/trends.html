@@ -1,0 +1,535 @@
+<div class="view-header">
+    <h1 class="view-title">
+        <i class="fas fa-chart-line"></i> Real-Time Trends
+    </h1>
+    <div class="view-actions">
+        <button class="btn btn-secondary" onclick="pauseTrending()">
+            <i class="fas fa-pause" id="pause-icon"></i> <span id="pause-text">Pause</span>
+        </button>
+        <button class="btn btn-secondary" onclick="resetZoom()">
+            <i class="fas fa-search-minus"></i> Reset Zoom
+        </button>
+        <button class="btn btn-primary" onclick="exportData()">
+            <i class="fas fa-download"></i> Export
+        </button>
+    </div>
+</div>
+
+<style>
+    .trend-controls {
+        background: #1e293b;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .control-group label {
+        font-size: 0.875rem;
+        color: #cbd5e1;
+        font-weight: 600;
+    }
+
+    .control-select {
+        background: #334155;
+        border: 1px solid #475569;
+        border-radius: 6px;
+        color: white;
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+        min-width: 150px;
+    }
+
+    .tag-selector {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .tag-chip {
+        background: #334155;
+        border: 1px solid #475569;
+        border-radius: 6px;
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .tag-chip.active {
+        background: #2563eb;
+        border-color: #2563eb;
+    }
+
+    .tag-chip:hover {
+        background: #475569;
+    }
+
+    .chart-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .chart-card {
+        background: #1e293b;
+        border-radius: 8px;
+        padding: 1.5rem;
+        border: 1px solid #334155;
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .chart-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .chart-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #10b981;
+    }
+
+    .chart-container {
+        height: 250px;
+        position: relative;
+    }
+
+    .stats-panel {
+        background: #1e293b;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .stat-item {
+        background: #334155;
+        border-radius: 6px;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #cbd5e1;
+    }
+
+    .stat-unit {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin-left: 0.25rem;
+    }
+</style>
+
+<div class="trend-controls">
+    <div class="control-group">
+        <label>Time Range</label>
+        <select class="control-select" id="time-range" onchange="updateTimeRange()">
+            <option value="60">Last 1 Minute</option>
+            <option value="300" selected>Last 5 Minutes</option>
+            <option value="900">Last 15 Minutes</option>
+            <option value="1800">Last 30 Minutes</option>
+            <option value="3600">Last 1 Hour</option>
+        </select>
+    </div>
+
+    <div class="control-group">
+        <label>Update Rate</label>
+        <select class="control-select" id="update-rate" onchange="updateRate()">
+            <option value="500">500ms (Fast)</option>
+            <option value="1000" selected>1s (Normal)</option>
+            <option value="2000">2s (Slow)</option>
+            <option value="5000">5s (Very Slow)</option>
+        </select>
+    </div>
+
+    <div class="control-group">
+        <label>Select Tags to Display</label>
+        <div class="tag-selector">
+            <div class="tag-chip active" onclick="toggleTag(this, 'temp')" data-tag="temp">
+                <i class="fas fa-thermometer-half"></i> Temperature
+            </div>
+            <div class="tag-chip active" onclick="toggleTag(this, 'pressure')" data-tag="pressure">
+                <i class="fas fa-gauge"></i> Pressure
+            </div>
+            <div class="tag-chip active" onclick="toggleTag(this, 'flow')" data-tag="flow">
+                <i class="fas fa-water"></i> Flow Rate
+            </div>
+            <div class="tag-chip active" onclick="toggleTag(this, 'level')" data-tag="level">
+                <i class="fas fa-arrows-alt-v"></i> Tank Level
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="chart-grid">
+    <div class="chart-card" id="chart-card-temp">
+        <div class="chart-header">
+            <div class="chart-title">
+                <i class="fas fa-thermometer-half" style="color: #ef4444;"></i>
+                Temperature (Reactor-101)
+            </div>
+            <div class="chart-value" id="temp-current">--</div>
+        </div>
+        <div class="chart-container">
+            <canvas id="chart-temp"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-card" id="chart-card-pressure">
+        <div class="chart-header">
+            <div class="chart-title">
+                <i class="fas fa-gauge" style="color: #3b82f6;"></i>
+                Pressure (System)
+            </div>
+            <div class="chart-value" id="pressure-current">--</div>
+        </div>
+        <div class="chart-container">
+            <canvas id="chart-pressure"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-card" id="chart-card-flow">
+        <div class="chart-header">
+            <div class="chart-title">
+                <i class="fas fa-water" style="color: #10b981;"></i>
+                Flow Rate (Pump-P101)
+            </div>
+            <div class="chart-value" id="flow-current">--</div>
+        </div>
+        <div class="chart-container">
+            <canvas id="chart-flow"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-card" id="chart-card-level">
+        <div class="chart-header">
+            <div class="chart-title">
+                <i class="fas fa-arrows-alt-v" style="color: #f59e0b;"></i>
+                Tank Level (Tank-T101)
+            </div>
+            <div class="chart-value" id="level-current">--</div>
+        </div>
+        <div class="chart-container">
+            <canvas id="chart-level"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="stats-panel">
+    <h3><i class="fas fa-calculator"></i> Statistical Summary</h3>
+    <div class="stats-grid">
+        <div class="stat-item">
+            <div class="stat-label">Temperature Avg</div>
+            <div class="stat-value" id="temp-avg">--<span class="stat-unit">°C</span></div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Temperature Min/Max</div>
+            <div class="stat-value" id="temp-minmax">--<span class="stat-unit">°C</span></div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Pressure Avg</div>
+            <div class="stat-value" id="pressure-avg">--<span class="stat-unit">bar</span></div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Pressure Min/Max</div>
+            <div class="stat-value" id="pressure-minmax">--<span class="stat-unit">bar</span></div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Flow Avg</div>
+            <div class="stat-value" id="flow-avg">--<span class="stat-unit">L/min</span></div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Level Avg</div>
+            <div class="stat-value" id="level-avg">--<span class="stat-unit">%</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let charts = {};
+    let trendData = {
+        temp: { values: [], times: [], current: 75 },
+        pressure: { values: [], times: [], current: 3.5 },
+        flow: { values: [], times: [], current: 120 },
+        level: { values: [], times: [], current: 65 }
+    };
+    let isPaused = false;
+    let updateInterval = null;
+    let maxDataPoints = 60;
+    let updateRateMs = 1000;
+
+    function initCharts() {
+        const chartConfig = {
+            temp: {
+                label: 'Temperature (°C)',
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                yMin: 0,
+                yMax: 150
+            },
+            pressure: {
+                label: 'Pressure (bar)',
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                yMin: 0,
+                yMax: 10
+            },
+            flow: {
+                label: 'Flow Rate (L/min)',
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                yMin: 0,
+                yMax: 200
+            },
+            level: {
+                label: 'Level (%)',
+                borderColor: '#f59e0b',
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                yMin: 0,
+                yMax: 100
+            }
+        };
+
+        Object.keys(chartConfig).forEach(key => {
+            const ctx = document.getElementById(`chart-${key}`).getContext('2d');
+            const config = chartConfig[key];
+
+            charts[key] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: config.label,
+                        data: [],
+                        borderColor: config.borderColor,
+                        backgroundColor: config.backgroundColor,
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            grid: {
+                                color: '#334155'
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                maxTicksLimit: 10
+                            }
+                        },
+                        y: {
+                            display: true,
+                            min: config.yMin,
+                            max: config.yMax,
+                            grid: {
+                                color: '#334155'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    }
+
+    function updateTrendData() {
+        if (isPaused) return;
+
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString();
+
+        Object.keys(trendData).forEach(key => {
+            const data = trendData[key];
+
+            // Simulate realistic process variations
+            let change = (Math.random() - 0.5) * 2;
+
+            // Add some occasional spikes
+            if (Math.random() < 0.05) {
+                change *= 3;
+            }
+
+            data.current += change;
+
+            // Keep within reasonable bounds
+            const bounds = {
+                temp: [60, 90],
+                pressure: [2, 5],
+                flow: [80, 160],
+                level: [40, 80]
+            };
+
+            const [min, max] = bounds[key];
+            data.current = Math.max(min, Math.min(max, data.current));
+
+            // Add to history
+            data.values.push(data.current);
+            data.times.push(timeStr);
+
+            // Keep only recent data
+            if (data.values.length > maxDataPoints) {
+                data.values.shift();
+                data.times.shift();
+            }
+
+            // Update chart
+            if (charts[key]) {
+                charts[key].data.labels = data.times;
+                charts[key].data.datasets[0].data = data.values;
+                charts[key].update('none');
+            }
+
+            // Update current value display
+            const units = { temp: '°C', pressure: ' bar', flow: ' L/min', level: '%' };
+            document.getElementById(`${key}-current`).textContent =
+                data.current.toFixed(1) + units[key];
+        });
+
+        updateStats();
+    }
+
+    function updateStats() {
+        Object.keys(trendData).forEach(key => {
+            const values = trendData[key].values;
+            if (values.length === 0) return;
+
+            const avg = values.reduce((a, b) => a + b, 0) / values.length;
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+
+            const avgEl = document.getElementById(`${key}-avg`);
+            const minmaxEl = document.getElementById(`${key}-minmax`);
+
+            if (avgEl) avgEl.innerHTML = avg.toFixed(1) + avgEl.querySelector('.stat-unit').outerHTML;
+            if (minmaxEl) minmaxEl.innerHTML = `${min.toFixed(1)} / ${max.toFixed(1)}` + minmaxEl.querySelector('.stat-unit').outerHTML;
+        });
+    }
+
+    function toggleTag(element, tag) {
+        element.classList.toggle('active');
+        const chartCard = document.getElementById(`chart-card-${tag}`);
+
+        if (element.classList.contains('active')) {
+            chartCard.style.display = 'block';
+        } else {
+            chartCard.style.display = 'none';
+        }
+    }
+
+    function pauseTrending() {
+        isPaused = !isPaused;
+        const icon = document.getElementById('pause-icon');
+        const text = document.getElementById('pause-text');
+
+        if (isPaused) {
+            icon.className = 'fas fa-play';
+            text.textContent = 'Resume';
+        } else {
+            icon.className = 'fas fa-pause';
+            text.textContent = 'Pause';
+        }
+    }
+
+    function resetZoom() {
+        Object.keys(charts).forEach(key => {
+            charts[key].resetZoom();
+        });
+        console.log('Charts zoom reset');
+    }
+
+    function updateTimeRange() {
+        const seconds = parseInt(document.getElementById('time-range').value);
+        maxDataPoints = Math.floor(seconds / (updateRateMs / 1000));
+        console.log('Time range updated:', seconds, 'seconds');
+    }
+
+    function updateRate() {
+        const newRate = parseInt(document.getElementById('update-rate').value);
+        updateRateMs = newRate;
+
+        if (updateInterval) {
+            clearInterval(updateInterval);
+        }
+        updateInterval = setInterval(updateTrendData, updateRateMs);
+
+        console.log('Update rate changed:', newRate, 'ms');
+    }
+
+    function exportData() {
+        let csv = 'Timestamp,Temperature,Pressure,Flow,Level\n';
+
+        const length = trendData.temp.times.length;
+        for (let i = 0; i < length; i++) {
+            csv += `"${trendData.temp.times[i]}",${trendData.temp.values[i].toFixed(2)},${trendData.pressure.values[i].toFixed(2)},${trendData.flow.values[i].toFixed(2)},${trendData.level.values[i].toFixed(2)}\n`;
+        }
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `trends_${new Date().toISOString()}.csv`;
+        a.click();
+        console.log('Trend data exported');
+    }
+
+    function init_trends() {
+        initCharts();
+        updateTrendData();
+        updateInterval = setInterval(updateTrendData, updateRateMs);
+    }
+
+    window.init_trends = init_trends;
+</script>

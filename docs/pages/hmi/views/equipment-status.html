@@ -1,0 +1,622 @@
+<div class="view-header">
+    <h1 class="view-title">
+        <i class="fas fa-cogs"></i> Equipment Status
+    </h1>
+    <div class="view-actions">
+        <button class="btn btn-secondary" onclick="refreshStatus()">
+            <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+        <button class="btn btn-primary" onclick="exportReport()">
+            <i class="fas fa-file-export"></i> Export Report
+        </button>
+    </div>
+</div>
+
+<style>
+    .status-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .summary-card {
+        background: #1e293b;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        border-bottom: 4px solid;
+    }
+
+    .summary-card.running { border-color: #10b981; }
+    .summary-card.stopped { border-color: #64748b; }
+    .summary-card.warning { border-color: #f59e0b; }
+    .summary-card.fault { border-color: #ef4444; }
+    .summary-card.maintenance { border-color: #3b82f6; }
+
+    .summary-card h2 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .summary-card p {
+        color: #94a3b8;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+    }
+
+    .equipment-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .equipment-card {
+        background: #1e293b;
+        border-radius: 8px;
+        padding: 1.5rem;
+        border: 1px solid #334155;
+    }
+
+    .equipment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 1.5rem;
+    }
+
+    .equipment-info {
+        flex: 1;
+    }
+
+    .equipment-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .equipment-type {
+        color: #94a3b8;
+        font-size: 0.875rem;
+    }
+
+    .status-indicator {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 700;
+        text-align: center;
+        min-width: 100px;
+    }
+
+    .status-running {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+        border: 1px solid #10b981;
+    }
+
+    .status-stopped {
+        background: rgba(100, 116, 139, 0.2);
+        color: #64748b;
+        border: 1px solid #64748b;
+    }
+
+    .status-warning {
+        background: rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+        border: 1px solid #f59e0b;
+    }
+
+    .status-fault {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid #ef4444;
+    }
+
+    .status-maintenance {
+        background: rgba(59, 130, 246, 0.2);
+        color: #3b82f6;
+        border: 1px solid #3b82f6;
+    }
+
+    .equipment-metrics {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .metric {
+        background: #334155;
+        border-radius: 6px;
+        padding: 1rem;
+    }
+
+    .metric-label {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+
+    .metric-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #cbd5e1;
+    }
+
+    .metric-unit {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin-left: 0.25rem;
+    }
+
+    .health-bar {
+        margin-top: 1rem;
+    }
+
+    .health-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .health-progress {
+        height: 8px;
+        background: #334155;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .health-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s;
+    }
+
+    .health-excellent { background: #10b981; }
+    .health-good { background: #3b82f6; }
+    .health-fair { background: #f59e0b; }
+    .health-poor { background: #ef4444; }
+
+    .equipment-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .equipment-btn {
+        flex: 1;
+        padding: 0.75rem;
+        border: 1px solid #475569;
+        background: #334155;
+        color: white;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .equipment-btn:hover {
+        background: #475569;
+    }
+
+    .maintenance-schedule {
+        background: #1e293b;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .schedule-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+    .schedule-table th {
+        text-align: left;
+        padding: 0.75rem;
+        background: #334155;
+        font-size: 0.875rem;
+        color: #cbd5e1;
+    }
+
+    .schedule-table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid #334155;
+    }
+
+    .schedule-due {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .due-overdue { background: #ef4444; color: white; }
+    .due-soon { background: #f59e0b; color: white; }
+    .due-ok { background: #10b981; color: white; }
+</style>
+
+<div class="status-summary">
+    <div class="summary-card running">
+        <h2 id="count-running">0</h2>
+        <p>Running</p>
+    </div>
+    <div class="summary-card stopped">
+        <h2 id="count-stopped">0</h2>
+        <p>Stopped</p>
+    </div>
+    <div class="summary-card warning">
+        <h2 id="count-warning">0</h2>
+        <p>Warning</p>
+    </div>
+    <div class="summary-card fault">
+        <h2 id="count-fault">0</h2>
+        <p>Fault</p>
+    </div>
+    <div class="summary-card maintenance">
+        <h2 id="count-maintenance">0</h2>
+        <p>Maintenance</p>
+    </div>
+</div>
+
+<div class="equipment-grid" id="equipment-grid">
+    <!-- Equipment cards will be populated here -->
+</div>
+
+<div class="maintenance-schedule">
+    <h3><i class="fas fa-calendar-alt"></i> Maintenance Schedule</h3>
+    <table class="schedule-table">
+        <thead>
+            <tr>
+                <th>Equipment</th>
+                <th>Maintenance Type</th>
+                <th>Last Performed</th>
+                <th>Next Due</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="schedule-body">
+            <!-- Schedule will be populated here -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    const equipment = [
+        {
+            id: 'pump-p101',
+            name: 'Pump P-101',
+            type: 'Centrifugal Pump',
+            icon: 'fa-fan',
+            status: 'running',
+            health: 92,
+            runtime: 12450,
+            cycles: 8234,
+            temperature: 68,
+            vibration: 2.1,
+            maintenance: { type: 'Bearing Replacement', last: '2024-10-15', next: '2025-01-15' }
+        },
+        {
+            id: 'valve-v101',
+            name: 'Control Valve V-101',
+            type: 'Pneumatic Control Valve',
+            icon: 'fa-compress-arrows-alt',
+            status: 'running',
+            health: 88,
+            runtime: 18920,
+            cycles: 15672,
+            position: 85,
+            pressure: 6.2,
+            maintenance: { type: 'Calibration', last: '2024-11-01', next: '2025-02-01' }
+        },
+        {
+            id: 'motor-m101',
+            name: 'Agitator Motor M-101',
+            type: 'AC Motor',
+            icon: 'fa-cog',
+            status: 'warning',
+            health: 65,
+            runtime: 28450,
+            cycles: 4521,
+            current: 45.2,
+            temperature: 82,
+            maintenance: { type: 'Motor Inspection', last: '2024-08-20', next: '2024-11-20' }
+        },
+        {
+            id: 'reactor-101',
+            name: 'Reactor 101',
+            type: 'Batch Reactor',
+            icon: 'fa-flask',
+            status: 'running',
+            health: 95,
+            runtime: 45320,
+            cycles: 1234,
+            temperature: 75,
+            pressure: 3.5,
+            maintenance: { type: 'Annual Inspection', last: '2024-01-10', next: '2025-01-10' }
+        },
+        {
+            id: 'compressor-c101',
+            name: 'Air Compressor C-101',
+            type: 'Rotary Screw Compressor',
+            icon: 'fa-wind',
+            status: 'running',
+            health: 78,
+            runtime: 35420,
+            cycles: 8921,
+            pressure: 7.5,
+            temperature: 72,
+            maintenance: { type: 'Filter Change', last: '2024-11-10', next: '2024-12-10' }
+        },
+        {
+            id: 'sensor-t101',
+            name: 'Temperature Sensor T-101',
+            type: 'RTD Sensor',
+            icon: 'fa-thermometer-half',
+            status: 'fault',
+            health: 25,
+            runtime: 52300,
+            cycles: 0,
+            value: 0,
+            error: 'Communication Lost',
+            maintenance: { type: 'Replacement', last: '2022-06-15', next: '2024-11-15' }
+        },
+        {
+            id: 'tank-t101',
+            name: 'Feed Tank T-101',
+            type: 'Storage Tank',
+            icon: 'fa-database',
+            status: 'running',
+            health: 100,
+            runtime: 87600,
+            cycles: 0,
+            level: 65,
+            volume: 3250,
+            maintenance: { type: 'Tank Cleaning', last: '2024-09-01', next: '2025-03-01' }
+        },
+        {
+            id: 'plc-1',
+            name: 'PLC-1 Controller',
+            type: 'Allen-Bradley ControlLogix',
+            icon: 'fa-microchip',
+            status: 'running',
+            health: 98,
+            runtime: 52560,
+            cycles: 0,
+            cpu: 15,
+            memory: 42,
+            maintenance: { type: 'Firmware Update', last: '2024-10-01', next: '2025-04-01' }
+        }
+    ];
+
+    function renderEquipment() {
+        const grid = document.getElementById('equipment-grid');
+
+        grid.innerHTML = equipment.map(eq => {
+            const healthClass = eq.health >= 90 ? 'excellent' : eq.health >= 75 ? 'good' : eq.health >= 50 ? 'fair' : 'poor';
+
+            let metricsHTML = '';
+            if (eq.temperature !== undefined) metricsHTML += `
+                <div class="metric">
+                    <div class="metric-label">Temperature</div>
+                    <div class="metric-value">${eq.temperature}<span class="metric-unit">°C</span></div>
+                </div>`;
+            if (eq.pressure !== undefined) metricsHTML += `
+                <div class="metric">
+                    <div class="metric-label">Pressure</div>
+                    <div class="metric-value">${eq.pressure}<span class="metric-unit">bar</span></div>
+                </div>`;
+            if (eq.vibration !== undefined) metricsHTML += `
+                <div class="metric">
+                    <div class="metric-label">Vibration</div>
+                    <div class="metric-value">${eq.vibration}<span class="metric-unit">mm/s</span></div>
+                </div>`;
+            if (eq.current !== undefined) metricsHTML += `
+                <div class="metric">
+                    <div class="metric-label">Current</div>
+                    <div class="metric-value">${eq.current}<span class="metric-unit">A</span></div>
+                </div>`;
+            if (eq.position !== undefined) metricsHTML += `
+                <div class="metric">
+                    <div class="metric-label">Position</div>
+                    <div class="metric-value">${eq.position}<span class="metric-unit">%</span></div>
+                </div>`;
+            if (eq.level !== undefined) metricsHTML += `
+                <div class="metric">
+                    <div class="metric-label">Level</div>
+                    <div class="metric-value">${eq.level}<span class="metric-unit">%</span></div>
+                </div>`;
+            if (eq.cpu !== undefined) metricsHTML += `
+                <div class="metric">
+                    <div class="metric-label">CPU Usage</div>
+                    <div class="metric-value">${eq.cpu}<span class="metric-unit">%</span></div>
+                </div>`;
+            if (eq.memory !== undefined) metricsHTML += `
+                <div class="metric">
+                    <div class="metric-label">Memory</div>
+                    <div class="metric-value">${eq.memory}<span class="metric-unit">%</span></div>
+                </div>`;
+
+            return `
+                <div class="equipment-card">
+                    <div class="equipment-header">
+                        <div class="equipment-info">
+                            <div class="equipment-name">
+                                <i class="fas ${eq.icon}"></i>
+                                ${eq.name}
+                            </div>
+                            <div class="equipment-type">${eq.type}</div>
+                        </div>
+                        <div class="status-indicator status-${eq.status}">
+                            ${eq.status.toUpperCase()}
+                        </div>
+                    </div>
+
+                    ${eq.error ? `
+                        <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; border-radius: 6px; padding: 0.75rem; margin-bottom: 1rem; color: #ef4444;">
+                            <i class="fas fa-exclamation-triangle"></i> ${eq.error}
+                        </div>
+                    ` : ''}
+
+                    <div class="equipment-metrics">
+                        <div class="metric">
+                            <div class="metric-label">Runtime</div>
+                            <div class="metric-value">${(eq.runtime / 1000).toFixed(1)}<span class="metric-unit">k hrs</span></div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Cycles</div>
+                            <div class="metric-value">${eq.cycles.toLocaleString()}</div>
+                        </div>
+                        ${metricsHTML}
+                    </div>
+
+                    <div class="health-bar">
+                        <div class="health-label">
+                            <span>Equipment Health</span>
+                            <strong>${eq.health}%</strong>
+                        </div>
+                        <div class="health-progress">
+                            <div class="health-fill health-${healthClass}" style="width: ${eq.health}%"></div>
+                        </div>
+                    </div>
+
+                    <div class="equipment-actions">
+                        <button class="equipment-btn" onclick="viewDetails('${eq.id}')">
+                            <i class="fas fa-info-circle"></i> Details
+                        </button>
+                        <button class="equipment-btn" onclick="viewHistory('${eq.id}')">
+                            <i class="fas fa-history"></i> History
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        updateSummary();
+    }
+
+    function renderMaintenanceSchedule() {
+        const tbody = document.getElementById('schedule-body');
+
+        tbody.innerHTML = equipment.map(eq => {
+            const lastDate = new Date(eq.maintenance.last);
+            const nextDate = new Date(eq.maintenance.next);
+            const today = new Date();
+            const daysUntil = Math.floor((nextDate - today) / (1000 * 60 * 60 * 24));
+
+            let dueClass, dueText;
+            if (daysUntil < 0) {
+                dueClass = 'due-overdue';
+                dueText = `${Math.abs(daysUntil)} days overdue`;
+            } else if (daysUntil < 7) {
+                dueClass = 'due-soon';
+                dueText = `Due in ${daysUntil} days`;
+            } else {
+                dueClass = 'due-ok';
+                dueText = `Due in ${daysUntil} days`;
+            }
+
+            return `
+                <tr>
+                    <td><strong>${eq.name}</strong></td>
+                    <td>${eq.maintenance.type}</td>
+                    <td>${eq.maintenance.last}</td>
+                    <td>${eq.maintenance.next}</td>
+                    <td><span class="schedule-due ${dueClass}">${dueText}</span></td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function updateSummary() {
+        const counts = {
+            running: 0,
+            stopped: 0,
+            warning: 0,
+            fault: 0,
+            maintenance: 0
+        };
+
+        equipment.forEach(eq => {
+            counts[eq.status]++;
+        });
+
+        document.getElementById('count-running').textContent = counts.running;
+        document.getElementById('count-stopped').textContent = counts.stopped;
+        document.getElementById('count-warning').textContent = counts.warning;
+        document.getElementById('count-fault').textContent = counts.fault;
+        document.getElementById('count-maintenance').textContent = counts.maintenance;
+    }
+
+    function viewDetails(id) {
+        const eq = equipment.find(e => e.id === id);
+        alert(`Equipment Details: ${eq.name}\n\nType: ${eq.type}\nStatus: ${eq.status}\nHealth: ${eq.health}%\nRuntime: ${eq.runtime} hours`);
+        console.log('View details:', id);
+    }
+
+    function viewHistory(id) {
+        const eq = equipment.find(e => e.id === id);
+        alert(`Viewing maintenance history for ${eq.name}`);
+        console.log('View history:', id);
+    }
+
+    function refreshStatus() {
+        // Simulate status refresh
+        equipment.forEach(eq => {
+            if (Math.random() < 0.1) {
+                eq.health += (Math.random() - 0.5) * 5;
+                eq.health = Math.max(0, Math.min(100, eq.health));
+            }
+        });
+        renderEquipment();
+        console.log('Status refreshed');
+    }
+
+    function exportReport() {
+        let report = 'Equipment Status Report\n';
+        report += '======================\n\n';
+
+        equipment.forEach(eq => {
+            report += `${eq.name} (${eq.type})\n`;
+            report += `Status: ${eq.status}\n`;
+            report += `Health: ${eq.health}%\n`;
+            report += `Runtime: ${eq.runtime} hours\n`;
+            report += `Next Maintenance: ${eq.maintenance.next} (${eq.maintenance.type})\n\n`;
+        });
+
+        const blob = new Blob([report], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `equipment_report_${new Date().toISOString()}.txt`;
+        a.click();
+        console.log('Report exported');
+    }
+
+    function init_equipment_status() {
+        renderEquipment();
+        renderMaintenanceSchedule();
+
+        // Update equipment status periodically
+        setInterval(() => {
+            equipment.forEach(eq => {
+                eq.runtime += 0.1;
+                if (eq.temperature) eq.temperature += (Math.random() - 0.5) * 2;
+            });
+        }, 5000);
+    }
+
+    window.init_equipment_status = init_equipment_status;
+</script>
