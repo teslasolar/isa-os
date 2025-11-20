@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ISA-OS HMI - Perspective Views</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="hmi/assets/css/hmi-common.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
@@ -13,21 +14,10 @@
             box-sizing: border-box;
         }
 
-        :root {
-            --primary: #2563eb;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --dark: #1e293b;
-            --darker: #0f172a;
-            --light: #f1f5f9;
-            --gray: #64748b;
-        }
-
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--darker);
-            color: white;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             overflow: hidden;
             height: 100vh;
             display: flex;
@@ -36,19 +26,19 @@
 
         /* GitHub Pages Header */
         .gh-header {
-            background: #1e293b;
+            background: var(--bg-secondary);
             color: white;
             padding: 0.5rem 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-size: 0.875rem;
-            border-bottom: 2px solid var(--primary);
+            border-bottom: 2px solid var(--status-info);
             flex-shrink: 0;
         }
 
         .gh-header a {
-            color: var(--primary);
+            color: var(--status-info);
             text-decoration: none;
             font-weight: 600;
         }
@@ -59,12 +49,12 @@
 
         /* Top Bar */
         .top-bar {
-            background: var(--dark);
+            background: var(--bg-secondary);
             padding: 1rem 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid var(--primary);
+            border-bottom: 2px solid var(--status-info);
             flex-shrink: 0;
         }
 
@@ -77,7 +67,7 @@
         }
 
         .logo i {
-            color: var(--primary);
+            color: var(--status-info);
         }
 
         .system-status {
@@ -92,22 +82,6 @@
             gap: 0.5rem;
         }
 
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        .status-dot.online {
-            background: var(--success);
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
         /* Main Container */
         .main-container {
             display: flex;
@@ -118,8 +92,8 @@
         /* Sidebar */
         .sidebar {
             width: 250px;
-            background: var(--dark);
-            border-right: 1px solid #334155;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
             overflow-y: auto;
             flex-shrink: 0;
         }
@@ -133,7 +107,7 @@
             padding: 0.75rem 1.5rem;
             font-size: 0.75rem;
             text-transform: uppercase;
-            color: var(--gray);
+            color: var(--text-tertiary);
             font-weight: 600;
             letter-spacing: 0.05em;
         }
@@ -145,18 +119,18 @@
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            color: #cbd5e1;
+            color: var(--text-secondary);
         }
 
         .nav-item:hover {
             background: rgba(37, 99, 235, 0.1);
-            color: white;
+            color: var(--text-primary);
         }
 
         .nav-item.active {
-            background: var(--primary);
+            background: var(--status-info);
             color: white;
-            border-left: 4px solid var(--success);
+            border-left: 4px solid var(--status-running);
         }
 
         .nav-item i {
@@ -166,7 +140,7 @@
         /* View Container */
         .view-container {
             flex: 1;
-            background: #0a0e27;
+            background: var(--bg-primary);
             overflow: auto;
             position: relative;
         }
@@ -187,41 +161,14 @@
         .view-title {
             font-size: 2rem;
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .view-actions {
             display: flex;
             gap: 1rem;
-        }
-
-        .btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #1d4ed8;
-        }
-
-        .btn-secondary {
-            background: #334155;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #475569;
         }
 
         /* Loading */
@@ -231,12 +178,12 @@
             align-items: center;
             justify-content: center;
             height: 100%;
-            color: var(--gray);
+            color: var(--text-tertiary);
         }
 
         .loading i {
             font-size: 3rem;
-            color: var(--primary);
+            color: var(--status-info);
             animation: spin 1s linear infinite;
         }
 
@@ -244,6 +191,12 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
+
+        /* Border decorators for components */
+        .border-left-primary { border-left: 4px solid var(--status-info) !important; }
+        .border-left-success { border-left: 4px solid var(--status-running) !important; }
+        .border-left-warning { border-left: 4px solid var(--status-warning) !important; }
+        .border-left-danger { border-left: 4px solid var(--status-fault) !important; }
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -258,6 +211,14 @@
             .sidebar.open {
                 left: 0;
             }
+        }
+
+        .float-right {
+            float: right;
+        }
+
+        .text-secondary {
+            color: var(--text-secondary);
         }
     </style>
 </head>
@@ -292,7 +253,7 @@
         </div>
         <div class="system-status">
             <div class="status-item">
-                <span class="status-dot online"></span>
+                <span class="status-indicator running"></span>
                 <span>System Online</span>
             </div>
             <div class="status-item">
@@ -316,6 +277,14 @@
                     <i class="fas fa-project-diagram"></i>
                     <span>Process Overview</span>
                 </li>
+
+                <li class="nav-category">Diagnostics</li>
+                <li class="nav-item" data-view="system-health">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>System Health</span>
+                </li>
+
+                <li class="nav-category">Legacy Views</li>
                 <li class="nav-item" data-view="control-panel">
                     <i class="fas fa-sliders-h"></i>
                     <span>Control Panel</span>
@@ -324,8 +293,6 @@
                     <i class="fas fa-cogs"></i>
                     <span>Equipment Status</span>
                 </li>
-
-                <li class="nav-category">Monitoring</li>
                 <li class="nav-item" data-view="alarms">
                     <i class="fas fa-bell"></i>
                     <span>Alarms (ISA-18.2)</span>
@@ -337,12 +304,6 @@
                 <li class="nav-item" data-view="batch-status">
                     <i class="fas fa-tasks"></i>
                     <span>Batch Status (ISA-88)</span>
-                </li>
-
-                <li class="nav-category">Diagnostics</li>
-                <li class="nav-item" data-view="system-health">
-                    <i class="fas fa-heartbeat"></i>
-                    <span>System Health</span>
                 </li>
                 <li class="nav-item" data-view="network-topology">
                     <i class="fas fa-network-wired"></i>
@@ -356,11 +317,15 @@
             <div class="view-content" id="view-content">
                 <div class="loading">
                     <i class="fas fa-spinner"></i>
-                    <p style="margin-top: 1rem;">Loading view...</p>
+                    <p style="margin-top: 1rem;">Initializing HMI System...</p>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Load HMI Framework -->
+    <script src="hmi/assets/js/hmi-common.js"></script>
+    <script src="hmi/assets/js/components.js"></script>
 
     <script>
         // System time update
@@ -404,25 +369,37 @@
             `;
 
             try {
-                const response = await fetch(`hmi/views/${viewName}.html`);
-                if (!response.ok) {
-                    throw new Error('View not found');
-                }
+                // Try to load JSON view first
+                const jsonResponse = await fetch(`hmi/views/${viewName}.json`);
 
-                const html = await response.text();
-                viewContent.innerHTML = html;
+                if (jsonResponse.ok) {
+                    console.log(`[HMI] Loading JSON view: ${viewName}`);
+                    await HMI.loadView(viewName);
+                } else {
+                    // Fallback to HTML view
+                    console.log(`[HMI] Loading legacy HTML view: ${viewName}`);
+                    const htmlResponse = await fetch(`hmi/views/${viewName}.html`);
 
-                // Initialize view if it has init function
-                if (window[`init_${viewName.replace(/-/g, '_')}`]) {
-                    window[`init_${viewName.replace(/-/g, '_')}`]();
+                    if (!htmlResponse.ok) {
+                        throw new Error('View not found');
+                    }
+
+                    const html = await htmlResponse.text();
+                    viewContent.innerHTML = html;
+
+                    // Initialize view if it has init function
+                    if (window[`init_${viewName.replace(/-/g, '_')}`]) {
+                        window[`init_${viewName.replace(/-/g, '_')}`]();
+                    }
                 }
 
             } catch (error) {
+                console.error('[HMI] Error loading view:', error);
                 viewContent.innerHTML = `
-                    <div style="text-align: center; padding: 4rem; color: var(--danger);">
+                    <div style="text-align: center; padding: 4rem; color: var(--status-fault);">
                         <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem;"></i>
                         <p><strong>Error loading view: ${viewName}</strong></p>
-                        <p style="margin-top: 0.5rem; color: var(--gray);">${error.message}</p>
+                        <p style="margin-top: 0.5rem; color: var(--text-tertiary);">${error.message}</p>
                         <p style="margin-top: 1rem;">
                             <button class="btn btn-primary" onclick="location.reload()">
                                 <i class="fas fa-redo"></i> Reload
@@ -433,8 +410,10 @@
             }
         }
 
-        // Load default view
-        loadView('process-overview');
+        // Load default view when HMI is ready
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => loadView('process-overview'), 500);
+        });
     </script>
 </body>
 </html>
