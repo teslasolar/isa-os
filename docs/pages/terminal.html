@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISA-OS Terminal - Interactive Sandbox</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0e27;
+            color: #10b981;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* GitHub Pages Header */
+        .gh-header {
+            background: #1e293b;
+            color: white;
+            padding: 0.5rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+            border-bottom: 2px solid #3b82f6;
+            flex-shrink: 0;
+        }
+
+        .gh-header a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .gh-header a:hover {
+            text-decoration: underline;
+        }
+
+        .gh-header i {
+            margin-right: 0.25rem;
+        }
+
+        /* Terminal Window */
+        .terminal-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            overflow: hidden;
+        }
+
+        .terminal-window {
+            background: #0f172a;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .terminal-header {
+            background: #1e293b;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot.red { background: #ef4444; }
+        .terminal-dot.yellow { background: #f59e0b; }
+        .terminal-dot.green { background: #10b981; }
+
+        .terminal-title {
+            margin-left: auto;
+            font-size: 0.875rem;
+            color: #94a3b8;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .terminal-body {
+            flex: 1;
+            padding: 1.5rem;
+            background: #0f172a;
+            overflow-y: auto;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .terminal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .terminal-body::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        .terminal-body::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+
+        .prompt {
+            color: #3b82f6;
+            font-weight: bold;
+        }
+
+        .output {
+            color: #94a3b8;
+            margin-bottom: 0.5rem;
+            white-space: pre-wrap;
+        }
+
+        .output.error {
+            color: #ef4444;
+        }
+
+        .output.success {
+            color: #10b981;
+        }
+
+        .output.warning {
+            color: #f59e0b;
+        }
+
+        .input-line {
+            display: flex;
+            align-items: center;
+        }
+
+        #terminal-input {
+            background: transparent;
+            border: none;
+            color: #10b981;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            outline: none;
+            flex: 1;
+            margin-left: 0.5rem;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            background: #10b981;
+            animation: blink 1s infinite;
+            margin-left: 2px;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Help Panel */
+        .help-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: #1e293b;
+            box-shadow: -4px 0 16px rgba(0,0,0,0.3);
+            transition: right 0.3s;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 2rem;
+            color: #e2e8f0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .help-panel.open {
+            right: 0;
+        }
+
+        .help-panel h2 {
+            color: #3b82f6;
+            margin-bottom: 1rem;
+        }
+
+        .help-panel h3 {
+            color: #10b981;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .help-panel code {
+            background: #0f172a;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            color: #10b981;
+        }
+
+        .help-panel ul {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .close-help {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .close-help:hover {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <!-- GitHub Pages Header -->
+    <div class="gh-header">
+        <div>
+            <i class="fas fa-home"></i>
+            <a href="../../index.html">← Back to ISA-OS Home</a>
+        </div>
+        <div>
+            <i class="fas fa-info-circle"></i>
+            GitHub Pages Terminal | Route through
+            <a href="../../index.html">root index.html</a>
+        </div>
+        <div>
+            <a href="https://github.com/teslasolar/isa-os" target="_blank">
+                <i class="fab fa-github"></i> View on GitHub
+            </a>
+        </div>
+    </div>
+
+    <!-- Terminal Container -->
+    <div class="terminal-container">
+        <div class="terminal-window">
+            <div class="terminal-header">
+                <div class="terminal-dot red"></div>
+                <div class="terminal-dot yellow"></div>
+                <div class="terminal-dot green"></div>
+                <div class="terminal-title">ISA-OS Terminal v1.1.0-alpha</div>
+            </div>
+            <div class="terminal-body" id="terminal">
+                <div class="output success">
+ISA-OS Kernel v1.1.0-alpha
+==================
+
+Phase 1: Foundation Complete
+- Error Handling Framework: OK
+- Real Context Switching: OK (<1μs)
+- Watchdog Timers: OK
+- RFC Standards: ISA-HAL, ISA-RT, ISA-SEC
+
+Initializing ISA-95 Levels...
+Agents: OK
+IPC: OK
+Alarms: OK
+Batches: OK
+Watchdogs: OK
+Error Handling: OK
+
+Spawning ISA agents...
+[AGENT] Spawned L0 (ID 0x00000000) - Field Devices
+[AGENT] Spawned L1 (ID 0x00000001) - Basic Control
+[AGENT] Spawned L2 (ID 0x00000002) - Supervisory
+[AGENT] Spawned L3 (ID 0x00000003) - MES Operations
+[AGENT] Spawned L4 (ID 0x00000004) - ERP Integration
+
+ISA-OS Ready!
+Active Agents: 5
+System Ticks: Running
+Watchdogs: Active
+
+Type 'help' for available commands or 'about' for system info.
+Press F1 for help panel.
+                </div>
+                <div class="input-line">
+                    <span class="prompt">isa-os></span>
+                    <input type="text" id="terminal-input" autofocus>
+                    <span class="cursor"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Panel -->
+    <div class="help-panel" id="help-panel">
+        <button class="close-help" onclick="toggleHelp()">×</button>
+        <h2><i class="fas fa-question-circle"></i> ISA-OS Terminal Help</h2>
+
+        <h3>System Commands</h3>
+        <ul>
+            <li><code>help</code> - Show available commands</li>
+            <li><code>about</code> - System information</li>
+            <li><code>version</code> - Show version</li>
+            <li><code>stats</code> - System statistics</li>
+            <li><code>uptime</code> - System uptime</li>
+            <li><code>clear</code> - Clear screen</li>
+        </ul>
+
+        <h3>Module Commands</h3>
+        <ul>
+            <li><code>modules</code> - List loaded modules</li>
+            <li><code>module info &lt;name&gt;</code> - Module details</li>
+        </ul>
+
+        <h3>Agent Commands</h3>
+        <ul>
+            <li><code>agents</code> - List active agents</li>
+            <li><code>agent info &lt;id&gt;</code> - Agent details</li>
+            <li><code>agent suspend &lt;id&gt;</code> - Suspend agent</li>
+            <li><code>agent resume &lt;id&gt;</code> - Resume agent</li>
+        </ul>
+
+        <h3>Watchdog Commands</h3>
+        <ul>
+            <li><code>watchdog list</code> - List all watchdogs</li>
+            <li><code>watchdog create &lt;agent&gt; &lt;timeout&gt;</code> - Create watchdog</li>
+            <li><code>watchdog enable &lt;id&gt;</code> - Enable watchdog</li>
+            <li><code>watchdog disable &lt;id&gt;</code> - Disable watchdog</li>
+        </ul>
+
+        <h3>ISA-95 Level Commands</h3>
+        <ul>
+            <li><code>l0 read &lt;sensor_id&gt;</code> - Read L0 sensor</li>
+            <li><code>l1 write &lt;actuator_id&gt; &lt;value&gt;</code> - Write L1 actuator</li>
+            <li><code>l2 alarm &lt;message&gt;</code> - Raise L2 alarm</li>
+            <li><code>l3 batch start &lt;recipe_id&gt;</code> - Start L3 batch</li>
+            <li><code>l4 erp sync</code> - Sync with L4 ERP</li>
+        </ul>
+
+        <h3>Configuration</h3>
+        <ul>
+            <li><code>config</code> - Show all configuration</li>
+            <li><code>config get &lt;key&gt;</code> - Get config value</li>
+            <li><code>config set &lt;key&gt; &lt;value&gt;</code> - Set config value</li>
+        </ul>
+
+        <h3>Error & Diagnostics</h3>
+        <ul>
+            <li><code>errors</code> - Show error statistics</li>
+            <li><code>errors last</code> - Show last error</li>
+            <li><code>errors clear</code> - Clear error stats</li>
+        </ul>
+
+        <h3>Keyboard Shortcuts</h3>
+        <ul>
+            <li><code>F1</code> - Toggle help panel</li>
+            <li><code>Ctrl+L</code> - Clear screen</li>
+            <li><code>Up/Down</code> - Command history</li>
+        </ul>
+    </div>
+
+    <script>
+        const terminalInput = document.getElementById('terminal-input');
+        const terminalBody = document.getElementById('terminal');
+        const helpPanel = document.getElementById('help-panel');
+        let commandHistory = [];
+        let historyIndex = -1;
+
+        // Extended command set
+        const commands = {
+            help: () => `
+Available Commands:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+System:     help, about, version, stats, uptime, clear
+Modules:    modules, module info <name>
+Agents:     agents, agent info <id>, agent suspend <id>, agent resume <id>
+Watchdog:   watchdog list, watchdog create, watchdog enable/disable
+L0-L4:      l0 read, l1 write, l2 alarm, l3 batch, l4 erp sync
+Config:     config, config get/set
+Errors:     errors, errors last, errors clear
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Press F1 for detailed help panel.
+`,
+            about: () => `
+╔════════════════════════════════════════════════════════════════════╗
+║  ISA-OS :: KONOMI[L0→L4]@Ω                                         ║
+║  Native ISA-95 Level Architecture in Kernel Space                  ║
+║  Real-Time • Deterministic • Industrial-Grade                      ║
+╚════════════════════════════════════════════════════════════════════╝
+
+Version:        1.1.0-alpha
+Build Date:     2025-11-20
+Architecture:   x86_64 (32-bit mode)
+Kernel Size:    ~2.3MB
+
+Standards:      ISA-95, ISA-88, ISA-18.2, 21 CFR Part 11
+Security:       ISA-SEC (SEC-2 compliant)
+Real-Time:      ISA-RT-Silver (<1μs context switch)
+Hardware:       ISA-HAL compatible
+
+Phase 1 Complete:
+  ✓ Error Handling Framework
+  ✓ Real Context Switching
+  ✓ Watchdog Timers
+  ✓ RFC Standards (ISA-HAL, ISA-RT, ISA-SEC)
+
+GitHub:         https://github.com/teslasolar/isa-os
+License:        MIT
+`,
+            version: () => `ISA-OS v1.1.0-alpha (Phase 1: Foundation Complete)`,
+
+            uptime: () => {
+                const uptimeSeconds = Math.floor(Math.random() * 86400);
+                const hours = Math.floor(uptimeSeconds / 3600);
+                const minutes = Math.floor((uptimeSeconds % 3600) / 60);
+                const seconds = uptimeSeconds % 60;
+                return `Uptime: ${hours}h ${minutes}m ${seconds}s | Ticks: ${uptimeSeconds * 1000}`;
+            },
+
+            stats: () => `
+[STATS] System Statistics:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+System ticks:        ${Math.floor(Math.random() * 100000).toString(16).padStart(8, '0')}
+Active agents:       0x00000005
+Context switches:    0x0000${Math.floor(Math.random() * 10000).toString(16).padStart(4, '0')}
+Syscalls:            0x000${Math.floor(Math.random() * 100000).toString(16).padStart(5, '0')}
+Alarms raised:       0x00000003
+Batches running:     0x00000001
+Modules loaded:      0x0000000A
+Watchdogs active:    0x00000005
+Errors total:        0x00000002 (2 warnings, 0 critical)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Performance:
+  Context switch:    ~800ns (target: <1μs) ✓
+  Syscall latency:   ~387ns (target: <500ns) ✓
+  L0 I/O cycle:      ~8.3μs (target: <10μs) ✓
+`,
+            modules: () => `
+[MODULE] Module List:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ID  Name              Type       Level    Status
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+01  can_bus           Driver     L0       Running
+02  config_system     Service    Core     Running
+03  i2c               Driver     L0       Running
+04  memory            Service    Core     Running
+05  mqtt              Protocol   L2       Running
+06  opc_ua            Protocol   L2       Running
+07  rtc               Driver     Core     Running
+08  shell             Service    Core     Running
+09  spi               Driver     L0       Running
+10  watchdog          Service    Core     Running
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total: 10 modules | All running
+`,
+            agents: () => `
+[AGENT] Agent List:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ID    Name              Level  Priority  State     Quantum
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+0x00  Field Monitor     L0     10        READY     100ms
+0x01  PLC Controller    L1     8         READY     80ms
+0x02  SCADA Supervisor  L2     5         RUNNING   50ms
+0x03  MES Operations    L3     3         READY     30ms
+0x04  ERP Integration   L4     1         READY     10ms
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total: 5 agents | CPU: L0(50%), L1(30%), L2(15%), L3/L4(5%)
+`,
+            config: () => `
+[CONFIG] System Configuration:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Scheduler:
+  tick_rate_hz           = 1000
+  max_agents             = 256
+  context_switch_time_us = 0.8
+
+Protocols:
+  modbus.enabled         = true
+  modbus.baud_rate       = 9600
+  mqtt.enabled           = true
+  mqtt.broker            = "mqtt.example.com"
+  opc_ua.enabled         = true
+  opc_ua.port            = 4840
+
+Safety:
+  watchdog.enabled       = true
+  watchdog.default_timeout_ms = 5000
+  error_logging.enabled  = true
+  audit_logging.enabled  = true
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`,
+            errors: () => `
+[ERROR] Error Statistics:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total errors:          2
+  INFO:                0
+  WARNING:             2
+  ERROR:               0
+  CRITICAL:            0
+  FATAL:               0
+
+Last error:            ISA_ERR_TIMEOUT (Device timeout)
+Time:                  ${new Date().toISOString()}
+Location:              kernel/drivers/modbus.c:142
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`,
+            watchdog: () => `
+[WATCHDOG] Watchdog List:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ID  Name              Agent  Timeout  State     Expirations
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+00  Field WD          0x00   5000ms   ENABLED   0
+01  PLC WD            0x01   1000ms   ENABLED   0
+02  SCADA WD          0x02   10000ms  ENABLED   0
+03  MES WD            0x03   30000ms  ENABLED   0
+04  ERP WD            0x04   60000ms  ENABLED   0
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total: 5 watchdogs | All active | 0 total expirations
+`,
+            clear: () => {
+                terminalBody.innerHTML = '';
+                return '';
+            }
+        };
+
+        function addOutput(text, className = 'output') {
+            const outputDiv = document.createElement('div');
+            outputDiv.className = className;
+            outputDiv.textContent = text;
+            terminalBody.appendChild(outputDiv);
+        }
+
+        function executeCommand(cmdLine) {
+            const [cmd, ...args] = cmdLine.trim().split(/\s+/);
+
+            if (!cmd) return;
+
+            if (cmd === 'l0' && args[0] === 'read') {
+                const sensorId = args[1] || '0';
+                const value = Math.floor(Math.random() * 1000);
+                return `[L0] Sensor ${sensorId} = 0x${value.toString(16).padStart(8, '0')} (${value})`;
+            } else if (cmd === 'l1' && args[0] === 'write') {
+                const actuatorId = args[1] || '0';
+                const value = args[2] || '0';
+                return `[L1] Actuator ${actuatorId} set to ${value}`;
+            } else if (cmd === 'l2' && args[0] === 'alarm') {
+                const msg = args.slice(1).join(' ') || 'Test alarm';
+                return `[L2] ALARM (CRITICAL): ${msg}`;
+            } else if (cmd === 'l3' && args[0] === 'batch' && args[1] === 'start') {
+                const recipeId = args[2] || '42';
+                const batchId = Math.floor(Math.random() * 1000);
+                return `[L3] Batch started: Recipe ${recipeId}, Batch ID ${batchId}`;
+            } else if (cmd === 'l4' && args[0] === 'erp' && args[1] === 'sync') {
+                return `[L4] ERP sync initiated... OK (synced ${Math.floor(Math.random() * 100)} records)`;
+            } else if (commands[cmd]) {
+                return commands[cmd]();
+            } else {
+                return `Command not found: ${cmd}\nType 'help' for available commands.`;
+            }
+        }
+
+        terminalInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const cmd = terminalInput.value.trim();
+                terminalInput.value = '';
+
+                // Add command to history
+                if (cmd) {
+                    commandHistory.push(cmd);
+                    historyIndex = commandHistory.length;
+                }
+
+                // Show command
+                const cmdLine = document.createElement('div');
+                cmdLine.innerHTML = `<span class="prompt">isa-os></span> ${cmd}`;
+                terminalBody.appendChild(cmdLine);
+
+                // Execute command
+                const output = executeCommand(cmd);
+                if (output) {
+                    addOutput(output, output.includes('ERROR') || output.includes('not found') ? 'output error' : 'output');
+                }
+
+                // Scroll to bottom
+                terminalBody.scrollTop = terminalBody.scrollHeight;
+
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    terminalInput.value = commandHistory[historyIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    terminalInput.value = commandHistory[historyIndex];
+                } else {
+                    historyIndex = commandHistory.length;
+                    terminalInput.value = '';
+                }
+            } else if (e.key === 'l' && e.ctrlKey) {
+                e.preventDefault();
+                commands.clear();
+            }
+        });
+
+        // F1 for help
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F1') {
+                e.preventDefault();
+                toggleHelp();
+            }
+        });
+
+        function toggleHelp() {
+            helpPanel.classList.toggle('open');
+        }
+
+        // Focus input on terminal click
+        terminalBody.addEventListener('click', () => {
+            terminalInput.focus();
+        });
+
+        // Auto-focus input
+        terminalInput.focus();
+    </script>
+</body>
+</html>

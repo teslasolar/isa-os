@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ISA-OS: Industrial Automation Operating System with native ISA-95 level support">
+    <meta name="keywords" content="industrial automation, operating system, ISA-95, real-time, SCADA, PLC, IIoT">
+    <title>ISA-OS - Industrial Automation Operating System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --secondary: #1e40af;
+            --accent: #3b82f6;
+            --dark: #1e293b;
+            --darker: #0f172a;
+            --light: #f1f5f9;
+            --text: #334155;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        /* GitHub Pages Header */
+        .gh-header {
+            background: var(--darker);
+            color: white;
+            padding: 0.5rem 0;
+            text-align: center;
+            font-size: 0.875rem;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .gh-header a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .gh-header a:hover {
+            text-decoration: underline;
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--dark);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        nav .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        nav .logo i {
+            color: var(--accent);
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: var(--accent);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(124, 58, 237, 0.9));
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .hero .subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0.95;
+        }
+
+        .hero .badges {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .badge {
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .badge i {
+            color: var(--success);
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: white;
+            color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            color: var(--primary);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Sections */
+        section {
+            padding: 4rem 2rem;
+            background: white;
+        }
+
+        section:nth-child(even) {
+            background: var(--light);
+        }
+
+        section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            text-align: center;
+        }
+
+        section .subtitle {
+            text-align: center;
+            color: var(--text);
+            margin-bottom: 3rem;
+            font-size: 1.125rem;
+        }
+
+        /* Features Grid */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .feature-card i {
+            font-size: 2.5rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Architecture Diagram */
+        .architecture {
+            background: var(--darker);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+
+        .architecture pre {
+            margin: 0;
+            white-space: pre;
+            line-height: 1.5;
+        }
+
+        /* Terminal Sandbox */
+        .terminal-sandbox {
+            background: var(--darker);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+
+        .terminal-header {
+            background: var(--dark);
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot.red { background: #ef4444; }
+        .terminal-dot.yellow { background: #f59e0b; }
+        .terminal-dot.green { background: #10b981; }
+
+        .terminal-title {
+            margin-left: auto;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .terminal-body {
+            padding: 1.5rem;
+            background: var(--darker);
+            color: #10b981;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            min-height: 400px;
+            overflow-y: auto;
+        }
+
+        .terminal-body .prompt {
+            color: var(--accent);
+        }
+
+        .terminal-body .output {
+            color: #94a3b8;
+            margin-bottom: 1rem;
+        }
+
+        /* Documentation Links */
+        .doc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .doc-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .doc-card:hover {
+            border-left-color: var(--success);
+            transform: translateX(5px);
+        }
+
+        .doc-card h3 {
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .doc-card a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .doc-card a:hover {
+            text-decoration: underline;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--darker);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero .subtitle {
+                font-size: 1.125rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- GitHub Pages Header -->
+    <div class="gh-header">
+        <i class="fas fa-info-circle"></i>
+        This is the GitHub Pages documentation site.
+        All pages route through <a href="/">index.html</a> as the OS entry point.
+        <a href="https://github.com/teslasolar/isa-os" target="_blank">
+            <i class="fab fa-github"></i> View on GitHub
+        </a>
+    </div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-cogs"></i>
+                <span>ISA-OS</span>
+            </div>
+            <ul>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#architecture">Architecture</a></li>
+                <li><a href="#sandbox">Sandbox</a></li>
+                <li><a href="#docs">Documentation</a></li>
+                <li><a href="https://github.com/teslasolar/isa-os" target="_blank">
+                    <i class="fab fa-github"></i> GitHub
+                </a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="hero">
+        <h1><i class="fas fa-industry"></i> ISA-OS</h1>
+        <p class="subtitle">Industrial Automation Operating System</p>
+        <p>Native ISA-95 Level Architecture • Real-Time • Deterministic • Industrial-Grade</p>
+
+        <div class="badges">
+            <span class="badge">
+                <i class="fas fa-check-circle"></i> ISA-95 Native
+            </span>
+            <span class="badge">
+                <i class="fas fa-bolt"></i> Real-Time (<1μs)
+            </span>
+            <span class="badge">
+                <i class="fas fa-shield-alt"></i> IEC 61508 Ready
+            </span>
+            <span class="badge">
+                <i class="fas fa-code"></i> Open Source
+            </span>
+        </div>
+
+        <div class="cta-buttons">
+            <a href="#sandbox" class="btn btn-primary">
+                <i class="fas fa-play"></i> Try Sandbox
+            </a>
+            <a href="#docs" class="btn btn-secondary">
+                <i class="fas fa-book"></i> Documentation
+            </a>
+            <a href="https://github.com/teslasolar/isa-os/releases" class="btn btn-secondary">
+                <i class="fas fa-download"></i> Download
+            </a>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <section id="features">
+        <div class="container">
+            <h2>Key Features</h2>
+            <p class="subtitle">Purpose-built for industrial automation and control systems</p>
+
+            <div class="features">
+                <div class="feature-card">
+                    <i class="fas fa-layer-group"></i>
+                    <h3>ISA-95 Native</h3>
+                    <p>L0-L4 levels implemented directly in kernel space, not as applications. True hierarchical control from field devices to ERP.</p>
+                </div>
+
+                <div class="feature-card">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <h3>Real-Time Performance</h3>
+                    <p>Context switch <1μs, syscall <500ns, L0 I/O <10μs. Deterministic scheduling with priority inheritance.</p>
+                </div>
+
+                <div class="feature-card">
+                    <i class="fas fa-network-wired"></i>
+                    <h3>Industrial Protocols</h3>
+                    <p>Built-in Modbus RTU, PROFINET IO, EtherCAT, CAN Bus, OPC UA, and MQTT. Native driver support.</p>
+                </div>
+
+                <div class="feature-card">
+                    <i class="fas fa-shield-alt"></i>
+                    <h3>Safety-Critical</h3>
+                    <p>Watchdog timers, error handling, audit logging. IEC 61508 SIL 2/3 compliance path.</p>
+                </div>
+
+                <div class="feature-card">
+                    <i class="fas fa-balance-scale"></i>
+                    <h3>Compliance Ready</h3>
+                    <p>21 CFR Part 11 audit logging, ISA-88 batch control, ISA-18.2 alarm management built-in.</p>
+                </div>
+
+                <div class="feature-card">
+                    <i class="fas fa-cubes"></i>
+                    <h3>Modular Architecture</h3>
+                    <p>Auto-loading modules, hot-plug drivers, configuration management. Extend without kernel rebuild.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture Section -->
+    <section id="architecture">
+        <div class="container">
+            <h2>Architecture</h2>
+            <p class="subtitle">ISA-95 levels implemented natively in kernel space</p>
+
+            <div class="architecture">
+                <pre>
+┌─────────────────────────────────────────────────────────────────┐
+│                    ISA-OS Architecture                          │
+├─────────────────────────────────────────────────────────────────┤
+│  L4: Enterprise (ERP, Planning, Logistics)        │ Ring 3      │
+├───────────────────────────────────────────────────┤             │
+│  L3: Manufacturing Ops (MES, Batch, Quality)      │ Ring 3      │
+├───────────────────────────────────────────────────┤             │
+│  L2: Supervisory (SCADA, HMI, Alarms)             │ Ring 3      │
+├───────────────────────────────────────────────────┤             │
+│  L1: Control (PLC, Motion, PID)                   │ Ring 3      │
+├───────────────────────────────────────────────────┼─────────────┤
+│  L0: Field Devices (Sensors, Actuators, I/O)      │ Ring 0      │
+├───────────────────────────────────────────────────┤             │
+│  Drivers: Modbus, PROFINET, EtherCAT              │ Ring 0      │
+├───────────────────────────────────────────────────┤             │
+│  Kernel: Scheduler, IPC, Syscalls                 │ Ring 0      │
+├───────────────────────────────────────────────────┴─────────────┤
+│  Hardware: x86_64 (32-bit mode), ARM, RISC-V                    │
+└─────────────────────────────────────────────────────────────────┘
+                </pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sandbox Section -->
+    <section id="sandbox">
+        <div class="container">
+            <h2>Interactive Sandbox</h2>
+            <p class="subtitle">Try ISA-OS commands in your browser</p>
+
+            <div class="terminal-sandbox">
+                <div class="terminal-header">
+                    <div class="terminal-dot red"></div>
+                    <div class="terminal-dot yellow"></div>
+                    <div class="terminal-dot green"></div>
+                    <div class="terminal-title">ISA-OS Terminal v1.0</div>
+                </div>
+                <div class="terminal-body" id="terminal">
+                    <div class="output">
+ISA-OS Kernel v1.1.0-alpha
+==================
+
+Initializing ISA-95 Levels...
+Agents: OK
+IPC: OK
+Alarms: OK
+Batches: OK
+Watchdogs: OK
+Error Handling: OK
+
+Spawning ISA agents...
+[AGENT] Spawned L0 (ID 0x00000000)
+[AGENT] Spawned L1 (ID 0x00000001)
+[AGENT] Spawned L2 (ID 0x00000002)
+[AGENT] Spawned L3 (ID 0x00000003)
+[AGENT] Spawned L4 (ID 0x00000004)
+
+ISA-OS Ready!
+Active Agents: 0x00000005
+System Ticks: Running
+
+Type 'help' for available commands.
+                    </div>
+                    <span class="prompt">isa-os></span>
+                    <input type="text" id="terminal-input"
+                           style="background: transparent; border: none; color: #10b981;
+                                  font-family: 'Courier New', monospace; outline: none;
+                                  width: calc(100% - 80px);"
+                           autofocus>
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem; text-align: center;">
+                <p><strong>Try these commands:</strong> help, modules, agents, stats, l0 read 0, config, clear</p>
+                <p style="margin-top: 0.5rem;">
+                    <a href="docs/pages/terminal.html" class="btn btn-primary">
+                        <i class="fas fa-external-link-alt"></i> Full Terminal
+                    </a>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Documentation Section -->
+    <section id="docs">
+        <div class="container">
+            <h2>Documentation</h2>
+            <p class="subtitle">Comprehensive guides and specifications</p>
+
+            <div class="doc-grid">
+                <div class="doc-card">
+                    <h3><i class="fas fa-rocket"></i> Quick Start</h3>
+                    <p>Get started in 5 minutes</p>
+                    <a href="QUICKSTART.md">Read Guide →</a>
+                </div>
+
+                <div class="doc-card">
+                    <h3><i class="fas fa-book"></i> README</h3>
+                    <p>Project overview and features</p>
+                    <a href="README.md">Read More →</a>
+                </div>
+
+                <div class="doc-card">
+                    <h3><i class="fas fa-sitemap"></i> Architecture</h3>
+                    <p>Technical architecture details</p>
+                    <a href="ARCHITECTURE.md">View Docs →</a>
+                </div>
+
+                <div class="doc-card">
+                    <h3><i class="fas fa-puzzle-piece"></i> Modules</h3>
+                    <p>Module system guide</p>
+                    <a href="MODULES.md">Learn More →</a>
+                </div>
+
+                <div class="doc-card">
+                    <h3><i class="fas fa-file-alt"></i> RFC-001: ISA-HAL</h3>
+                    <p>Hardware Abstraction Layer</p>
+                    <a href="docs/rfcs/RFC-001-ISA-HAL.md">Read RFC →</a>
+                </div>
+
+                <div class="doc-card">
+                    <h3><i class="fas fa-clock"></i> RFC-002: ISA-RT</h3>
+                    <p>Real-Time Guarantees</p>
+                    <a href="docs/rfcs/RFC-002-ISA-RT.md">Read RFC →</a>
+                </div>
+
+                <div class="doc-card">
+                    <h3><i class="fas fa-lock"></i> RFC-003: ISA-SEC</h3>
+                    <p>Security Standard</p>
+                    <a href="docs/rfcs/RFC-003-ISA-SEC.md">Read RFC →</a>
+                </div>
+
+                <div class="doc-card">
+                    <h3><i class="fas fa-list"></i> Changelog</h3>
+                    <p>Version history</p>
+                    <a href="CHANGELOG.md">View Changes →</a>
+                </div>
+
+                <div class="doc-card">
+                    <h3><i class="fas fa-check-square"></i> Phase 1 Summary</h3>
+                    <p>Implementation details</p>
+                    <a href="docs/PHASE1-SUMMARY.md">Read Summary →</a>
+                </div>
+
+                <div class="doc-card">
+                    <h3><i class="fab fa-docker"></i> Docker Guide</h3>
+                    <p>Container deployment</p>
+                    <a href="DOCKER.md">Deploy Now →</a>
+                </div>
+
+                <div class="doc-card">
+                    <h3><i class="fas fa-folder-open"></i> File Index</h3>
+                    <p>Complete file listing</p>
+                    <a href="INDEX.md">Browse Files →</a>
+                </div>
+
+                <div class="doc-card">
+                    <h3><i class="fab fa-github"></i> GitHub Repo</h3>
+                    <p>Source code and issues</p>
+                    <a href="https://github.com/teslasolar/isa-os" target="_blank">View on GitHub →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p><strong>ISA-OS</strong> - Industrial Automation Operating System</p>
+            <p style="margin-top: 0.5rem;">
+                Built for Industry 4.0 | Designed for IIoT | Powered by ISA-95
+            </p>
+            <p style="margin-top: 1rem;">
+                <a href="https://github.com/teslasolar/isa-os">
+                    <i class="fab fa-github"></i> GitHub
+                </a> |
+                <a href="https://github.com/teslasolar/isa-os/issues">
+                    <i class="fas fa-bug"></i> Issues
+                </a> |
+                <a href="LICENSE">
+                    <i class="fas fa-balance-scale"></i> MIT License
+                </a>
+            </p>
+            <p style="margin-top: 1rem; font-size: 0.875rem; opacity: 0.7;">
+                © 2025 ISA-OS Project. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Terminal JavaScript -->
+    <script>
+        const terminalInput = document.getElementById('terminal-input');
+        const terminalBody = document.getElementById('terminal');
+
+        const commands = {
+            help: () => `
+Available Commands:
+  help              - Show this help
+  modules           - List loaded modules
+  agents            - List active agents
+  stats             - System statistics
+  config            - Show configuration
+  l0 read <id>      - Read L0 sensor
+  l1 write <id> <v> - Write L1 actuator
+  l2 alarm <msg>    - Raise L2 alarm
+  clear             - Clear screen
+`,
+            modules: () => `
+[MODULE] Module List:
+─────────────────────────────────────────────────────
+can_bus - CAN Bus Driver [Driver] (Running)
+config_system - Configuration System [Service] (Running)
+i2c - I2C Driver [Driver] (Running)
+memory - Memory Manager [Service] (Running)
+mqtt - MQTT Client [Protocol] (Running)
+opc_ua - OPC UA Server [Protocol] (Running)
+rtc - Real-Time Clock [Driver] (Running)
+shell - Interactive Shell [Service] (Running)
+spi - SPI Driver [Driver] (Running)
+watchdog - Watchdog Timer [Service] (Running)
+─────────────────────────────────────────────────────
+Total: 10 modules
+`,
+            agents: () => `
+[AGENT] Agent List:
+─────────────────────────────────────────────────────
+  0x00000000 | L0 | P10 | READY
+  0x00000001 | L1 | P8  | READY
+  0x00000002 | L2 | P5  | READY
+  0x00000003 | L3 | P3  | READY
+  0x00000004 | L4 | P1  | READY
+─────────────────────────────────────────────────────
+Total: 5 agents
+`,
+            stats: () => `
+[STATS] System Statistics:
+─────────────────────────────────────────────────────
+System ticks: 0x00002A3F
+Active agents: 0x00000005
+Alarms raised: 0x00000001
+Modules loaded: 0x0000000A
+Context switches: 0x000015B2
+Watchdog checks: 0x00001234
+─────────────────────────────────────────────────────
+`,
+            config: () => `
+[CONFIG] System Configuration:
+─────────────────────────────────────────────────────
+scheduler.tick_rate_hz = 1000
+scheduler.max_agents = 256
+modbus.enabled = true
+modbus.baud_rate = 9600
+mqtt.enabled = true
+mqtt.broker = "mqtt.example.com"
+─────────────────────────────────────────────────────
+`,
+            clear: () => {
+                terminalBody.innerHTML = '<span class="prompt">isa-os></span>';
+                return '';
+            }
+        };
+
+        terminalInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const cmd = terminalInput.value.trim();
+                terminalInput.value = '';
+
+                // Show command
+                const cmdLine = document.createElement('div');
+                cmdLine.className = 'output';
+                cmdLine.innerHTML = `<span class="prompt">isa-os></span> ${cmd}`;
+                terminalBody.insertBefore(cmdLine, terminalBody.lastElementChild);
+
+                // Execute command
+                let output = '';
+                const [mainCmd, ...args] = cmd.split(' ');
+
+                if (mainCmd === 'l0' && args[0] === 'read') {
+                    output = `Sensor ${args[1] || '0'} = 0x00000042 (66)`;
+                } else if (mainCmd === 'l1' && args[0] === 'write') {
+                    output = `Actuator ${args[1] || '0'} set to ${args[2] || '0'}`;
+                } else if (mainCmd === 'l2' && args[0] === 'alarm') {
+                    output = `[ALARM] P0x00000001: ${args.slice(1).join(' ') || 'Test alarm'}`;
+                } else if (commands[mainCmd]) {
+                    output = commands[mainCmd]();
+                } else if (cmd) {
+                    output = `Command not found: ${cmd}. Type 'help' for available commands.`;
+                }
+
+                if (output && mainCmd !== 'clear') {
+                    const outputDiv = document.createElement('div');
+                    outputDiv.className = 'output';
+                    outputDiv.textContent = output;
+                    terminalBody.insertBefore(outputDiv, terminalBody.lastElementChild);
+                }
+
+                // Scroll to bottom
+                terminalBody.scrollTop = terminalBody.scrollHeight;
+            }
+        });
+
+        // Focus input on terminal click
+        terminalBody.addEventListener('click', () => {
+            terminalInput.focus();
+        });
+    </script>
+</body>
+</html>
