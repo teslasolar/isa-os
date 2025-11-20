@@ -1,0 +1,791 @@
+<div class="view-header">
+    <h1 class="view-title">
+        <i class="fas fa-network-wired"></i> Network Topology
+    </h1>
+    <div class="view-actions">
+        <button class="btn btn-secondary" onclick="scanNetwork()">
+            <i class="fas fa-search"></i> Scan Network
+        </button>
+        <button class="btn btn-primary" onclick="exportTopology()">
+            <i class="fas fa-download"></i> Export
+        </button>
+    </div>
+</div>
+
+<style>
+    .topology-container {
+        background: #0a0e27;
+        border-radius: 8px;
+        padding: 2rem;
+        min-height: 600px;
+        position: relative;
+        overflow: auto;
+    }
+
+    .network-layer {
+        margin-bottom: 3rem;
+        position: relative;
+    }
+
+    .layer-header {
+        background: #1e293b;
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-left: 4px solid;
+    }
+
+    .layer-l4 { border-color: #3b82f6; }
+    .layer-l3 { border-color: #10b981; }
+    .layer-l2 { border-color: #eab308; }
+    .layer-l1 { border-color: #f59e0b; }
+    .layer-l0 { border-color: #ef4444; }
+
+    .layer-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+    }
+
+    .layer-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .node-grid {
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .network-node {
+        background: #1e293b;
+        border: 2px solid #334155;
+        border-radius: 12px;
+        padding: 1.5rem;
+        min-width: 200px;
+        position: relative;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+    .network-node:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        border-color: #3b82f6;
+    }
+
+    .network-node.online {
+        border-color: #10b981;
+    }
+
+    .network-node.warning {
+        border-color: #f59e0b;
+    }
+
+    .network-node.offline {
+        border-color: #64748b;
+    }
+
+    .node-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .node-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        background: rgba(37, 99, 235, 0.2);
+        color: #3b82f6;
+    }
+
+    .node-icon.online { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+    .node-icon.warning { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+    .node-icon.offline { background: rgba(100, 116, 139, 0.2); color: #64748b; }
+
+    .node-info h4 {
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .node-type {
+        font-size: 0.75rem;
+        color: #94a3b8;
+    }
+
+    .node-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .node-detail-item {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.875rem;
+        padding: 0.5rem;
+        background: #334155;
+        border-radius: 4px;
+    }
+
+    .node-detail-label {
+        color: #94a3b8;
+    }
+
+    .node-detail-value {
+        font-weight: 600;
+        color: #cbd5e1;
+    }
+
+    .node-status {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+
+    .status-online { background: #10b981; }
+    .status-warning { background: #f59e0b; }
+    .status-offline { background: #64748b; }
+
+    .connection-line {
+        position: absolute;
+        height: 2px;
+        background: #334155;
+        transform-origin: left center;
+        z-index: -1;
+    }
+
+    .protocol-badges {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 0.75rem;
+    }
+
+    .protocol-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.625rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .protocol-modbus { background: #ef4444; color: white; }
+    .protocol-profinet { background: #10b981; color: white; }
+    .protocol-ethercat { background: #3b82f6; color: white; }
+    .protocol-opcua { background: #f59e0b; color: white; }
+    .protocol-mqtt { background: #8b5cf6; color: white; }
+    .protocol-ethernet { background: #64748b; color: white; }
+
+    .stats-panel {
+        background: #1e293b;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .stat-card {
+        background: #334155;
+        border-radius: 6px;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #10b981;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: #94a3b8;
+        margin-top: 0.5rem;
+    }
+
+    .legend {
+        display: flex;
+        gap: 2rem;
+        justify-content: center;
+        margin-top: 2rem;
+        padding: 1rem;
+        background: #1e293b;
+        border-radius: 8px;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+</style>
+
+<div class="topology-container">
+    <!-- L4: Enterprise Level -->
+    <div class="network-layer">
+        <div class="layer-header layer-l4">
+            <div class="layer-title">
+                <i class="fas fa-cloud"></i> L4: Enterprise Resource Planning
+            </div>
+            <div class="layer-badge">ERP / BI</div>
+        </div>
+        <div class="node-grid">
+            <div class="network-node online">
+                <span class="node-status status-online"></span>
+                <div class="node-header">
+                    <div class="node-icon online">
+                        <i class="fas fa-cloud"></i>
+                    </div>
+                    <div class="node-info">
+                        <h4>ERP System</h4>
+                        <div class="node-type">Cloud Server</div>
+                    </div>
+                </div>
+                <div class="node-details">
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">IP</span>
+                        <span class="node-detail-value">10.0.1.10</span>
+                    </div>
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">Latency</span>
+                        <span class="node-detail-value">45 ms</span>
+                    </div>
+                </div>
+                <div class="protocol-badges">
+                    <span class="protocol-badge protocol-ethernet">HTTPS</span>
+                </div>
+            </div>
+
+            <div class="network-node online">
+                <span class="node-status status-online"></span>
+                <div class="node-header">
+                    <div class="node-icon online">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="node-info">
+                        <h4>Analytics Server</h4>
+                        <div class="node-type">Data Warehouse</div>
+                    </div>
+                </div>
+                <div class="node-details">
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">IP</span>
+                        <span class="node-detail-value">10.0.1.20</span>
+                    </div>
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">Storage</span>
+                        <span class="node-detail-value">2.4 TB</span>
+                    </div>
+                </div>
+                <div class="protocol-badges">
+                    <span class="protocol-badge protocol-mqtt">MQTT</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- L3: Manufacturing Execution System -->
+    <div class="network-layer">
+        <div class="layer-header layer-l3">
+            <div class="layer-title">
+                <i class="fas fa-tasks"></i> L3: Manufacturing Execution System
+            </div>
+            <div class="layer-badge">MES / Batch</div>
+        </div>
+        <div class="node-grid">
+            <div class="network-node online">
+                <span class="node-status status-online"></span>
+                <div class="node-header">
+                    <div class="node-icon online">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <div class="node-info">
+                        <h4>MES Server</h4>
+                        <div class="node-type">Application Server</div>
+                    </div>
+                </div>
+                <div class="node-details">
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">IP</span>
+                        <span class="node-detail-value">10.0.2.10</span>
+                    </div>
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">CPU</span>
+                        <span class="node-detail-value">23%</span>
+                    </div>
+                </div>
+                <div class="protocol-badges">
+                    <span class="protocol-badge protocol-opcua">OPC UA</span>
+                    <span class="protocol-badge protocol-ethernet">TCP/IP</span>
+                </div>
+            </div>
+
+            <div class="network-node online">
+                <span class="node-status status-online"></span>
+                <div class="node-header">
+                    <div class="node-icon online">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                    <div class="node-info">
+                        <h4>Batch Manager</h4>
+                        <div class="node-type">ISA-88 Server</div>
+                    </div>
+                </div>
+                <div class="node-details">
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">IP</span>
+                        <span class="node-detail-value">10.0.2.20</span>
+                    </div>
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">Batches</span>
+                        <span class="node-detail-value">1 Active</span>
+                    </div>
+                </div>
+                <div class="protocol-badges">
+                    <span class="protocol-badge protocol-opcua">OPC UA</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- L2: Supervisory Control -->
+    <div class="network-layer">
+        <div class="layer-header layer-l2">
+            <div class="layer-title">
+                <i class="fas fa-desktop"></i> L2: Supervisory Control
+            </div>
+            <div class="layer-badge">SCADA / HMI</div>
+        </div>
+        <div class="node-grid">
+            <div class="network-node online">
+                <span class="node-status status-online"></span>
+                <div class="node-header">
+                    <div class="node-icon online">
+                        <i class="fas fa-desktop"></i>
+                    </div>
+                    <div class="node-info">
+                        <h4>SCADA Server</h4>
+                        <div class="node-type">Supervisory Control</div>
+                    </div>
+                </div>
+                <div class="node-details">
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">IP</span>
+                        <span class="node-detail-value">10.0.3.10</span>
+                    </div>
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">Tags</span>
+                        <span class="node-detail-value">1,245</span>
+                    </div>
+                </div>
+                <div class="protocol-badges">
+                    <span class="protocol-badge protocol-opcua">OPC UA</span>
+                    <span class="protocol-badge protocol-modbus">Modbus</span>
+                </div>
+            </div>
+
+            <div class="network-node online">
+                <span class="node-status status-online"></span>
+                <div class="node-header">
+                    <div class="node-icon online">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="node-info">
+                        <h4>Historian</h4>
+                        <div class="node-type">Time-Series Database</div>
+                    </div>
+                </div>
+                <div class="node-details">
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">IP</span>
+                        <span class="node-detail-value">10.0.3.20</span>
+                    </div>
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">Rate</span>
+                        <span class="node-detail-value">500 pts/s</span>
+                    </div>
+                </div>
+                <div class="protocol-badges">
+                    <span class="protocol-badge protocol-opcua">OPC UA</span>
+                </div>
+            </div>
+
+            <div class="network-node warning">
+                <span class="node-status status-warning"></span>
+                <div class="node-header">
+                    <div class="node-icon warning">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <div class="node-info">
+                        <h4>Alarm Server</h4>
+                        <div class="node-type">ISA-18.2 System</div>
+                    </div>
+                </div>
+                <div class="node-details">
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">IP</span>
+                        <span class="node-detail-value">10.0.3.30</span>
+                    </div>
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">Alarms</span>
+                        <span class="node-detail-value">3 Active</span>
+                    </div>
+                </div>
+                <div class="protocol-badges">
+                    <span class="protocol-badge protocol-ethernet">TCP/IP</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- L1: Basic Control -->
+    <div class="network-layer">
+        <div class="layer-header layer-l1">
+            <div class="layer-title">
+                <i class="fas fa-microchip"></i> L1: Basic Control
+            </div>
+            <div class="layer-badge">PLC / DCS</div>
+        </div>
+        <div class="node-grid">
+            <div class="network-node online">
+                <span class="node-status status-online"></span>
+                <div class="node-header">
+                    <div class="node-icon online">
+                        <i class="fas fa-microchip"></i>
+                    </div>
+                    <div class="node-info">
+                        <h4>PLC-1</h4>
+                        <div class="node-type">Allen-Bradley ControlLogix</div>
+                    </div>
+                </div>
+                <div class="node-details">
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">IP</span>
+                        <span class="node-detail-value">192.168.1.10</span>
+                    </div>
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">Scan</span>
+                        <span class="node-detail-value">10 ms</span>
+                    </div>
+                </div>
+                <div class="protocol-badges">
+                    <span class="protocol-badge protocol-ethercat">EtherNet/IP</span>
+                </div>
+            </div>
+
+            <div class="network-node online">
+                <span class="node-status status-online"></span>
+                <div class="node-header">
+                    <div class="node-icon online">
+                        <i class="fas fa-microchip"></i>
+                    </div>
+                    <div class="node-info">
+                        <h4>PLC-2</h4>
+                        <div class="node-type">Siemens S7-1500</div>
+                    </div>
+                </div>
+                <div class="node-details">
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">IP</span>
+                        <span class="node-detail-value">192.168.1.20</span>
+                    </div>
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">Scan</span>
+                        <span class="node-detail-value">5 ms</span>
+                    </div>
+                </div>
+                <div class="protocol-badges">
+                    <span class="protocol-badge protocol-profinet">PROFINET</span>
+                </div>
+            </div>
+
+            <div class="network-node online">
+                <span class="node-status status-online"></span>
+                <div class="node-header">
+                    <div class="node-icon online">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="node-info">
+                        <h4>Safety PLC</h4>
+                        <div class="node-type">IEC 61508 SIL 3</div>
+                    </div>
+                </div>
+                <div class="node-details">
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">IP</span>
+                        <span class="node-detail-value">192.168.1.30</span>
+                    </div>
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">Status</span>
+                        <span class="node-detail-value">Safe</span>
+                    </div>
+                </div>
+                <div class="protocol-badges">
+                    <span class="protocol-badge protocol-profinet">PROFIsafe</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- L0: Field Devices -->
+    <div class="network-layer">
+        <div class="layer-header layer-l0">
+            <div class="layer-title">
+                <i class="fas fa-cogs"></i> L0: Field Devices
+            </div>
+            <div class="layer-badge">Sensors / Actuators</div>
+        </div>
+        <div class="node-grid">
+            <div class="network-node online">
+                <span class="node-status status-online"></span>
+                <div class="node-header">
+                    <div class="node-icon online">
+                        <i class="fas fa-fan"></i>
+                    </div>
+                    <div class="node-info">
+                        <h4>Pump P-101</h4>
+                        <div class="node-type">VFD</div>
+                    </div>
+                </div>
+                <div class="node-details">
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">Addr</span>
+                        <span class="node-detail-value">MB:1</span>
+                    </div>
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">Speed</span>
+                        <span class="node-detail-value">1450 RPM</span>
+                    </div>
+                </div>
+                <div class="protocol-badges">
+                    <span class="protocol-badge protocol-modbus">Modbus RTU</span>
+                </div>
+            </div>
+
+            <div class="network-node online">
+                <span class="node-status status-online"></span>
+                <div class="node-header">
+                    <div class="node-icon online">
+                        <i class="fas fa-thermometer-half"></i>
+                    </div>
+                    <div class="node-info">
+                        <h4>Temp T-101</h4>
+                        <div class="node-type">RTD Sensor</div>
+                    </div>
+                </div>
+                <div class="node-details">
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">Addr</span>
+                        <span class="node-detail-value">PN:5</span>
+                    </div>
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">Value</span>
+                        <span class="node-detail-value">75.2°C</span>
+                    </div>
+                </div>
+                <div class="protocol-badges">
+                    <span class="protocol-badge protocol-profinet">PROFINET</span>
+                </div>
+            </div>
+
+            <div class="network-node online">
+                <span class="node-status status-online"></span>
+                <div class="node-header">
+                    <div class="node-icon online">
+                        <i class="fas fa-compress-arrows-alt"></i>
+                    </div>
+                    <div class="node-info">
+                        <h4>Valve V-101</h4>
+                        <div class="node-type">Control Valve</div>
+                    </div>
+                </div>
+                <div class="node-details">
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">Addr</span>
+                        <span class="node-detail-value">EC:10</span>
+                    </div>
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">Position</span>
+                        <span class="node-detail-value">85%</span>
+                    </div>
+                </div>
+                <div class="protocol-badges">
+                    <span class="protocol-badge protocol-ethercat">EtherCAT</span>
+                </div>
+            </div>
+
+            <div class="network-node offline">
+                <span class="node-status status-offline"></span>
+                <div class="node-header">
+                    <div class="node-icon offline">
+                        <i class="fas fa-thermometer-half"></i>
+                    </div>
+                    <div class="node-info">
+                        <h4>Temp T-102</h4>
+                        <div class="node-type">RTD Sensor</div>
+                    </div>
+                </div>
+                <div class="node-details">
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">Addr</span>
+                        <span class="node-detail-value">MB:3</span>
+                    </div>
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">Status</span>
+                        <span class="node-detail-value">Offline</span>
+                    </div>
+                </div>
+                <div class="protocol-badges">
+                    <span class="protocol-badge protocol-modbus">Modbus RTU</span>
+                </div>
+            </div>
+
+            <div class="network-node online">
+                <span class="node-status status-online"></span>
+                <div class="node-header">
+                    <div class="node-icon online">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <div class="node-info">
+                        <h4>Motor M-101</h4>
+                        <div class="node-type">AC Motor Drive</div>
+                    </div>
+                </div>
+                <div class="node-details">
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">Addr</span>
+                        <span class="node-detail-value">MB:2</span>
+                    </div>
+                    <div class="node-detail-item">
+                        <span class="node-detail-label">RPM</span>
+                        <span class="node-detail-value">850</span>
+                    </div>
+                </div>
+                <div class="protocol-badges">
+                    <span class="protocol-badge protocol-modbus">Modbus RTU</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="stats-panel">
+    <h3><i class="fas fa-chart-bar"></i> Network Statistics</h3>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value" id="total-nodes">23</div>
+            <div class="stat-label">Total Nodes</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="online-nodes">22</div>
+            <div class="stat-label">Online</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="offline-nodes">1</div>
+            <div class="stat-label">Offline</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="avg-latency">2.1</div>
+            <div class="stat-label">Avg Latency (ms)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="bandwidth">127</div>
+            <div class="stat-label">Bandwidth (Mbps)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">99.8%</div>
+            <div class="stat-label">Uptime</div>
+        </div>
+    </div>
+</div>
+
+<div class="legend">
+    <div class="legend-item">
+        <span class="legend-color status-online"></span>
+        <span>Online</span>
+    </div>
+    <div class="legend-item">
+        <span class="legend-color status-warning"></span>
+        <span>Warning</span>
+    </div>
+    <div class="legend-item">
+        <span class="legend-color status-offline"></span>
+        <span>Offline</span>
+    </div>
+</div>
+
+<script>
+    function scanNetwork() {
+        alert('Scanning network...\n\n✓ L4: 2 nodes found\n✓ L3: 2 nodes found\n✓ L2: 3 nodes found\n✓ L1: 3 nodes found\n✓ L0: 13 nodes found\n\nTotal: 23 nodes\nOnline: 22\nOffline: 1');
+        console.log('Network scan completed');
+    }
+
+    function exportTopology() {
+        let topology = 'ISA-OS Network Topology\n';
+        topology += '========================\n\n';
+        topology += 'Generated: ' + new Date().toLocaleString() + '\n\n';
+        topology += 'Network Statistics:\n';
+        topology += `Total Nodes: ${document.getElementById('total-nodes').textContent}\n`;
+        topology += `Online: ${document.getElementById('online-nodes').textContent}\n`;
+        topology += `Offline: ${document.getElementById('offline-nodes').textContent}\n`;
+        topology += `Avg Latency: ${document.getElementById('avg-latency').textContent} ms\n`;
+        topology += `Bandwidth: ${document.getElementById('bandwidth').textContent} Mbps\n\n`;
+        topology += 'Network Layers:\n';
+        topology += '- L4: Enterprise (ERP, Analytics)\n';
+        topology += '- L3: MES (Batch Manager, MES Server)\n';
+        topology += '- L2: SCADA (HMI, Historian, Alarms)\n';
+        topology += '- L1: Control (PLCs, Safety Systems)\n';
+        topology += '- L0: Field (Sensors, Actuators, Drives)\n';
+
+        const blob = new Blob([topology], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `network_topology_${new Date().toISOString()}.txt`;
+        a.click();
+        console.log('Topology exported');
+    }
+
+    function updateStats() {
+        document.getElementById('avg-latency').textContent = (2 + Math.random() * 0.5).toFixed(1);
+        document.getElementById('bandwidth').textContent = Math.floor(120 + Math.random() * 20);
+    }
+
+    function init_network_topology() {
+        // Update stats periodically
+        setInterval(updateStats, 3000);
+    }
+
+    window.init_network_topology = init_network_topology;
+</script>

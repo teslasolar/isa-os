@@ -1,0 +1,595 @@
+<div class="view-header">
+    <h1 class="view-title">
+        <i class="fas fa-heartbeat"></i> System Health
+    </h1>
+    <div class="view-actions">
+        <button class="btn btn-secondary" onclick="runDiagnostics()">
+            <i class="fas fa-stethoscope"></i> Run Diagnostics
+        </button>
+        <button class="btn btn-primary" onclick="exportHealthReport()">
+            <i class="fas fa-file-medical"></i> Export Report
+        </button>
+    </div>
+</div>
+
+<style>
+    .health-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .health-card {
+        background: #1e293b;
+        border-radius: 8px;
+        padding: 1.5rem;
+        border-left: 4px solid;
+    }
+
+    .health-card.healthy { border-color: #10b981; }
+    .health-card.warning { border-color: #f59e0b; }
+    .health-card.critical { border-color: #ef4444; }
+    .health-card.info { border-color: #3b82f6; }
+
+    .health-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .health-title {
+        font-size: 0.875rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+    }
+
+    .health-status {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+
+    .status-healthy { background: #10b981; }
+    .status-warning { background: #f59e0b; }
+    .status-critical { background: #ef4444; }
+
+    .health-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #cbd5e1;
+        margin-bottom: 0.5rem;
+    }
+
+    .health-label {
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+
+    .health-detail {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #334155;
+        font-size: 0.875rem;
+        color: #94a3b8;
+    }
+
+    .section-panel {
+        background: #1e293b;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .agent-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .agent-card {
+        background: #334155;
+        border-radius: 6px;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .agent-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .agent-icon.l0 { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+    .agent-icon.l1 { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+    .agent-icon.l2 { background: rgba(234, 179, 8, 0.2); color: #eab308; }
+    .agent-icon.l3 { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+    .agent-icon.l4 { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+
+    .agent-info {
+        flex: 1;
+    }
+
+    .agent-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .agent-status {
+        font-size: 0.75rem;
+        color: #94a3b8;
+    }
+
+    .watchdog-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .watchdog-item {
+        background: #334155;
+        border-radius: 6px;
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .watchdog-info {
+        flex: 1;
+    }
+
+    .watchdog-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .watchdog-timer {
+        font-size: 0.875rem;
+        color: #94a3b8;
+    }
+
+    .watchdog-indicator {
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .watchdog-healthy {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+    }
+
+    .watchdog-expired {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+    }
+
+    .error-log {
+        max-height: 300px;
+        overflow-y: auto;
+        background: #0a0e27;
+        border-radius: 6px;
+        padding: 1rem;
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+    }
+
+    .error-entry {
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+        border-left: 3px solid;
+        background: #1e293b;
+    }
+
+    .error-entry.critical { border-color: #ef4444; }
+    .error-entry.warning { border-color: #f59e0b; }
+    .error-entry.info { border-color: #3b82f6; }
+
+    .error-time {
+        color: #64748b;
+        margin-right: 0.5rem;
+    }
+
+    .error-level {
+        padding: 0.125rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        margin-right: 0.5rem;
+    }
+
+    .level-critical { background: #ef4444; color: white; }
+    .level-warning { background: #f59e0b; color: white; }
+    .level-info { background: #3b82f6; color: white; }
+
+    .metric-bars {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .metric-bar-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .metric-bar-header {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.875rem;
+    }
+
+    .metric-bar {
+        height: 24px;
+        background: #334155;
+        border-radius: 6px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .metric-bar-fill {
+        height: 100%;
+        transition: width 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .bar-low { background: #10b981; }
+    .bar-medium { background: #f59e0b; }
+    .bar-high { background: #ef4444; }
+</style>
+
+<div class="health-grid">
+    <div class="health-card healthy">
+        <div class="health-header">
+            <span class="health-title">System Uptime</span>
+            <span class="health-status status-healthy"></span>
+        </div>
+        <div class="health-value" id="uptime-value">72h</div>
+        <div class="health-label">Since last reboot</div>
+        <div class="health-detail">
+            Last reboot: 2024-11-17 06:00:00
+        </div>
+    </div>
+
+    <div class="health-card healthy">
+        <div class="health-header">
+            <span class="health-title">CPU Load</span>
+            <span class="health-status status-healthy"></span>
+        </div>
+        <div class="health-value"><span id="cpu-load">23</span>%</div>
+        <div class="health-label">Average load</div>
+        <div class="health-detail">
+            Peak: <strong id="cpu-peak">45%</strong> | Cores: 4
+        </div>
+    </div>
+
+    <div class="health-card info">
+        <div class="health-header">
+            <span class="health-title">Memory Usage</span>
+            <span class="health-status status-healthy"></span>
+        </div>
+        <div class="health-value"><span id="memory-usage">512</span>KB</div>
+        <div class="health-label">of 2048 KB total</div>
+        <div class="health-detail">
+            Available: <strong id="memory-free">1536 KB</strong>
+        </div>
+    </div>
+
+    <div class="health-card healthy">
+        <div class="health-header">
+            <span class="health-title">Active Agents</span>
+            <span class="health-status status-healthy"></span>
+        </div>
+        <div class="health-value" id="active-agents">15</div>
+        <div class="health-label">of 32 maximum</div>
+        <div class="health-detail">
+            Suspended: <strong id="suspended-agents">2</strong>
+        </div>
+    </div>
+
+    <div class="health-card warning">
+        <div class="health-header">
+            <span class="health-title">Active Alarms</span>
+            <span class="health-status status-warning"></span>
+        </div>
+        <div class="health-value" id="active-alarms">3</div>
+        <div class="health-label">requiring attention</div>
+        <div class="health-detail">
+            Critical: <strong style="color: #ef4444;">0</strong> | High: <strong style="color: #f59e0b;">3</strong>
+        </div>
+    </div>
+
+    <div class="health-card healthy">
+        <div class="health-header">
+            <span class="health-title">Network Status</span>
+            <span class="health-status status-healthy"></span>
+        </div>
+        <div class="health-value">100%</div>
+        <div class="health-label">All nodes online</div>
+        <div class="health-detail">
+            Latency: <strong>2.1 ms</strong> avg
+        </div>
+    </div>
+</div>
+
+<div class="section-panel">
+    <div class="section-header">
+        <div class="section-title">
+            <i class="fas fa-robot"></i> Agent Status (ISA-95 Levels)
+        </div>
+    </div>
+    <div class="agent-grid" id="agent-grid">
+        <!-- Agents will be populated here -->
+    </div>
+</div>
+
+<div class="section-panel">
+    <div class="section-header">
+        <div class="section-title">
+            <i class="fas fa-shield-alt"></i> Watchdog Timers
+        </div>
+    </div>
+    <div class="watchdog-list" id="watchdog-list">
+        <!-- Watchdogs will be populated here -->
+    </div>
+</div>
+
+<div class="section-panel">
+    <div class="section-header">
+        <div class="section-title">
+            <i class="fas fa-chart-bar"></i> Resource Utilization
+        </div>
+    </div>
+    <div class="metric-bars">
+        <div class="metric-bar-item">
+            <div class="metric-bar-header">
+                <span>Kernel Stack Usage</span>
+                <strong id="stack-percent">32%</strong>
+            </div>
+            <div class="metric-bar">
+                <div class="metric-bar-fill bar-low" id="stack-bar" style="width: 32%;">32%</div>
+            </div>
+        </div>
+        <div class="metric-bar-item">
+            <div class="metric-bar-header">
+                <span>Agent Pool Usage</span>
+                <strong id="pool-percent">47%</strong>
+            </div>
+            <div class="metric-bar">
+                <div class="metric-bar-fill bar-low" id="pool-bar" style="width: 47%;">47%</div>
+            </div>
+        </div>
+        <div class="metric-bar-item">
+            <div class="metric-bar-header">
+                <span>Module Memory</span>
+                <strong id="module-percent">58%</strong>
+            </div>
+            <div class="metric-bar">
+                <div class="metric-bar-fill bar-medium" id="module-bar" style="width: 58%;">58%</div>
+            </div>
+        </div>
+        <div class="metric-bar-item">
+            <div class="metric-bar-header">
+                <span>I/O Buffer Usage</span>
+                <strong id="io-percent">25%</strong>
+            </div>
+            <div class="metric-bar">
+                <div class="metric-bar-fill bar-low" id="io-bar" style="width: 25%;">25%</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="section-panel">
+    <div class="section-header">
+        <div class="section-title">
+            <i class="fas fa-exclamation-triangle"></i> Recent Error Log
+        </div>
+    </div>
+    <div class="error-log" id="error-log">
+        <!-- Error log will be populated here -->
+    </div>
+</div>
+
+<script>
+    const agents = [
+        { name: 'Modbus Master', level: 'l0', status: 'Running', cpu: 5 },
+        { name: 'PROFINET IO', level: 'l0', status: 'Running', cpu: 8 },
+        { name: 'Analog Scanner', level: 'l0', status: 'Running', cpu: 3 },
+        { name: 'Digital I/O', level: 'l0', status: 'Running', cpu: 2 },
+        { name: 'PID Controller', level: 'l1', status: 'Running', cpu: 12 },
+        { name: 'Ladder Logic', level: 'l1', status: 'Running', cpu: 15 },
+        { name: 'Safety Logic', level: 'l1', status: 'Running', cpu: 6 },
+        { name: 'SCADA Server', level: 'l2', status: 'Running', cpu: 10 },
+        { name: 'Historian', level: 'l2', status: 'Running', cpu: 8 },
+        { name: 'Alarm Manager', level: 'l2', status: 'Running', cpu: 4 },
+        { name: 'OPC UA Server', level: 'l2', status: 'Suspended', cpu: 0 },
+        { name: 'MES Interface', level: 'l3', status: 'Running', cpu: 7 },
+        { name: 'Batch Manager', level: 'l3', status: 'Running', cpu: 9 },
+        { name: 'ERP Connector', level: 'l4', status: 'Suspended', cpu: 0 },
+        { name: 'Analytics', level: 'l4', status: 'Running', cpu: 11 }
+    ];
+
+    const watchdogs = [
+        { name: 'L0 Field Devices', timeout: 5000, remaining: 4250, healthy: true },
+        { name: 'L1 Controllers', timeout: 10000, remaining: 8500, healthy: true },
+        { name: 'L2 Supervisory', timeout: 15000, remaining: 12300, healthy: true },
+        { name: 'Network Monitor', timeout: 3000, remaining: 2100, healthy: true },
+        { name: 'Safety System', timeout: 2000, remaining: 1650, healthy: true }
+    ];
+
+    const errorLog = [
+        { time: '14:23:45', level: 'info', message: '[AGENT] Agent 15 spawned: Analytics' },
+        { time: '14:22:10', level: 'warning', message: '[MODULE] Modbus: Slave timeout on address 5' },
+        { time: '14:20:32', level: 'info', message: '[SYSCALL] Agent 8 created watchdog timer' },
+        { time: '14:18:15', level: 'warning', message: '[AGENT] Agent 11 suspended (OPC UA Server)' },
+        { time: '14:15:05', level: 'info', message: '[MODULE] SCADA: Connected to HMI client' },
+        { time: '14:12:40', level: 'critical', message: '[ERROR] L0: Temperature sensor T-101 communication lost' },
+        { time: '14:10:22', level: 'info', message: '[BATCH] Phase completed: Heat to Setpoint' },
+        { time: '14:08:55', level: 'info', message: '[AGENT] Agent 14 resumed (ERP Connector)' }
+    ];
+
+    function renderAgents() {
+        const grid = document.getElementById('agent-grid');
+
+        grid.innerHTML = agents.map(agent => `
+            <div class="agent-card">
+                <div class="agent-icon ${agent.level}">
+                    <i class="fas fa-microchip"></i>
+                </div>
+                <div class="agent-info">
+                    <div class="agent-name">${agent.name}</div>
+                    <div class="agent-status">${agent.status} | ${agent.cpu}% CPU</div>
+                </div>
+            </div>
+        `).join('');
+
+        // Update counts
+        const active = agents.filter(a => a.status === 'Running').length;
+        const suspended = agents.filter(a => a.status === 'Suspended').length;
+        document.getElementById('active-agents').textContent = active;
+        document.getElementById('suspended-agents').textContent = suspended;
+    }
+
+    function renderWatchdogs() {
+        const list = document.getElementById('watchdog-list');
+
+        list.innerHTML = watchdogs.map(wd => `
+            <div class="watchdog-item">
+                <div class="watchdog-info">
+                    <div class="watchdog-name">${wd.name}</div>
+                    <div class="watchdog-timer">Timeout: ${wd.timeout}ms | Remaining: ${wd.remaining}ms</div>
+                </div>
+                <div class="watchdog-indicator ${wd.healthy ? 'watchdog-healthy' : 'watchdog-expired'}">
+                    ${wd.healthy ? 'HEALTHY' : 'EXPIRED'}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderErrorLog() {
+        const log = document.getElementById('error-log');
+
+        log.innerHTML = errorLog.map(error => `
+            <div class="error-entry ${error.level}">
+                <span class="error-time">${error.time}</span>
+                <span class="error-level level-${error.level}">${error.level.toUpperCase()}</span>
+                ${error.message}
+            </div>
+        `).join('');
+    }
+
+    function updateMetrics() {
+        // CPU Load
+        const cpuLoad = 20 + Math.random() * 10;
+        document.getElementById('cpu-load').textContent = cpuLoad.toFixed(0);
+        document.getElementById('cpu-peak').textContent = (cpuLoad + 15).toFixed(0) + '%';
+
+        // Memory
+        const memUsage = 480 + Math.random() * 64;
+        document.getElementById('memory-usage').textContent = memUsage.toFixed(0);
+        document.getElementById('memory-free').textContent = (2048 - memUsage).toFixed(0) + ' KB';
+
+        // Resource bars
+        updateBar('stack', 30 + Math.random() * 10);
+        updateBar('pool', 45 + Math.random() * 10);
+        updateBar('module', 55 + Math.random() * 10);
+        updateBar('io', 20 + Math.random() * 15);
+
+        // Watchdog timers
+        watchdogs.forEach(wd => {
+            wd.remaining -= 100;
+            if (wd.remaining <= 0) {
+                wd.remaining = wd.timeout;
+            }
+        });
+        renderWatchdogs();
+    }
+
+    function updateBar(id, value) {
+        const percent = value.toFixed(0);
+        document.getElementById(`${id}-percent`).textContent = percent + '%';
+
+        const bar = document.getElementById(`${id}-bar`);
+        bar.style.width = percent + '%';
+        bar.textContent = percent + '%';
+
+        // Update color based on value
+        bar.className = 'metric-bar-fill';
+        if (value < 50) {
+            bar.classList.add('bar-low');
+        } else if (value < 75) {
+            bar.classList.add('bar-medium');
+        } else {
+            bar.classList.add('bar-high');
+        }
+    }
+
+    function runDiagnostics() {
+        alert('Running system diagnostics...\n\n✓ CPU: OK\n✓ Memory: OK\n✓ Agents: OK\n✓ Watchdogs: OK\n✓ Network: OK\n\nSystem health: GOOD');
+        console.log('Diagnostics completed');
+    }
+
+    function exportHealthReport() {
+        let report = 'ISA-OS System Health Report\n';
+        report += '============================\n\n';
+        report += `Generated: ${new Date().toLocaleString()}\n\n`;
+        report += `CPU Load: ${document.getElementById('cpu-load').textContent}%\n`;
+        report += `Memory Usage: ${document.getElementById('memory-usage').textContent} KB\n`;
+        report += `Active Agents: ${document.getElementById('active-agents').textContent}\n`;
+        report += `Active Alarms: ${document.getElementById('active-alarms').textContent}\n\n`;
+        report += 'Agent Status:\n';
+        agents.forEach(agent => {
+            report += `  - ${agent.name}: ${agent.status} (${agent.cpu}% CPU)\n`;
+        });
+
+        const blob = new Blob([report], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `system_health_${new Date().toISOString()}.txt`;
+        a.click();
+        console.log('Health report exported');
+    }
+
+    function init_system_health() {
+        renderAgents();
+        renderWatchdogs();
+        renderErrorLog();
+
+        // Update metrics every 2 seconds
+        setInterval(updateMetrics, 2000);
+    }
+
+    window.init_system_health = init_system_health;
+</script>

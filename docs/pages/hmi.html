@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISA-OS HMI - Perspective Views</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --darker: #0f172a;
+            --light: #f1f5f9;
+            --gray: #64748b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--darker);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* GitHub Pages Header */
+        .gh-header {
+            background: #1e293b;
+            color: white;
+            padding: 0.5rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+            border-bottom: 2px solid var(--primary);
+            flex-shrink: 0;
+        }
+
+        .gh-header a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .gh-header a:hover {
+            text-decoration: underline;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: var(--dark);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary);
+            flex-shrink: 0;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo i {
+            color: var(--primary);
+        }
+
+        .system-status {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.875rem;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.online {
+            background: var(--success);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Main Container */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: var(--dark);
+            border-right: 1px solid #334155;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .view-nav {
+            list-style: none;
+            padding: 1rem 0;
+        }
+
+        .nav-category {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--gray);
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .nav-item {
+            padding: 0.875rem 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #cbd5e1;
+        }
+
+        .nav-item:hover {
+            background: rgba(37, 99, 235, 0.1);
+            color: white;
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+            border-left: 4px solid var(--success);
+        }
+
+        .nav-item i {
+            width: 20px;
+        }
+
+        /* View Container */
+        .view-container {
+            flex: 1;
+            background: #0a0e27;
+            overflow: auto;
+            position: relative;
+        }
+
+        .view-content {
+            padding: 2rem;
+            min-height: 100%;
+        }
+
+        /* View Header */
+        .view-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .view-title {
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .view-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background: #334155;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--gray);
+        }
+
+        .loading i {
+            font-size: 3rem;
+            color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: absolute;
+                left: -250px;
+                height: 100%;
+                z-index: 1000;
+                transition: left 0.3s;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- GitHub Pages Header -->
+    <div class="gh-header">
+        <div>
+            <i class="fas fa-home"></i>
+            <a href="../../index.html">← Back to ISA-OS Home</a>
+        </div>
+        <div>
+            <i class="fas fa-desktop"></i>
+            HMI Perspective Views | Route through
+            <a href="../../index.html">root index.html</a>
+        </div>
+        <div>
+            <a href="../terminal.html">
+                <i class="fas fa-terminal"></i> Terminal
+            </a>
+            |
+            <a href="https://github.com/teslasolar/isa-os" target="_blank">
+                <i class="fab fa-github"></i> GitHub
+            </a>
+        </div>
+    </div>
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="logo">
+            <i class="fas fa-industry"></i>
+            <span>ISA-OS HMI</span>
+        </div>
+        <div class="system-status">
+            <div class="status-item">
+                <span class="status-dot online"></span>
+                <span>System Online</span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-clock"></i>
+                <span id="system-time">--:--:--</span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-microchip"></i>
+                <span id="cpu-usage">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <ul class="view-nav">
+                <li class="nav-category">Process Views</li>
+                <li class="nav-item active" data-view="process-overview">
+                    <i class="fas fa-project-diagram"></i>
+                    <span>Process Overview</span>
+                </li>
+                <li class="nav-item" data-view="control-panel">
+                    <i class="fas fa-sliders-h"></i>
+                    <span>Control Panel</span>
+                </li>
+                <li class="nav-item" data-view="equipment-status">
+                    <i class="fas fa-cogs"></i>
+                    <span>Equipment Status</span>
+                </li>
+
+                <li class="nav-category">Monitoring</li>
+                <li class="nav-item" data-view="alarms">
+                    <i class="fas fa-bell"></i>
+                    <span>Alarms (ISA-18.2)</span>
+                </li>
+                <li class="nav-item" data-view="trends">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Trends</span>
+                </li>
+                <li class="nav-item" data-view="batch-status">
+                    <i class="fas fa-tasks"></i>
+                    <span>Batch Status (ISA-88)</span>
+                </li>
+
+                <li class="nav-category">Diagnostics</li>
+                <li class="nav-item" data-view="system-health">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>System Health</span>
+                </li>
+                <li class="nav-item" data-view="network-topology">
+                    <i class="fas fa-network-wired"></i>
+                    <span>Network Topology</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- View Container -->
+        <div class="view-container">
+            <div class="view-content" id="view-content">
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                    <p style="margin-top: 1rem;">Loading view...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // System time update
+        function updateSystemTime() {
+            const now = new Date();
+            document.getElementById('system-time').textContent = now.toLocaleTimeString();
+        }
+        setInterval(updateSystemTime, 1000);
+        updateSystemTime();
+
+        // Simulate CPU usage
+        function updateCPUUsage() {
+            const usage = Math.floor(Math.random() * 30) + 10;
+            document.getElementById('cpu-usage').textContent = usage + '%';
+        }
+        setInterval(updateCPUUsage, 2000);
+        updateCPUUsage();
+
+        // View loader
+        const viewContent = document.getElementById('view-content');
+        const navItems = document.querySelectorAll('.nav-item');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                // Update active state
+                navItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+
+                // Load view
+                const viewName = item.getAttribute('data-view');
+                loadView(viewName);
+            });
+        });
+
+        async function loadView(viewName) {
+            viewContent.innerHTML = `
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                    <p style="margin-top: 1rem;">Loading ${viewName}...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`hmi/views/${viewName}.html`);
+                if (!response.ok) {
+                    throw new Error('View not found');
+                }
+
+                const html = await response.text();
+                viewContent.innerHTML = html;
+
+                // Initialize view if it has init function
+                if (window[`init_${viewName.replace(/-/g, '_')}`]) {
+                    window[`init_${viewName.replace(/-/g, '_')}`]();
+                }
+
+            } catch (error) {
+                viewContent.innerHTML = `
+                    <div style="text-align: center; padding: 4rem; color: var(--danger);">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <p><strong>Error loading view: ${viewName}</strong></p>
+                        <p style="margin-top: 0.5rem; color: var(--gray);">${error.message}</p>
+                        <p style="margin-top: 1rem;">
+                            <button class="btn btn-primary" onclick="location.reload()">
+                                <i class="fas fa-redo"></i> Reload
+                            </button>
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        // Load default view
+        loadView('process-overview');
+    </script>
+</body>
+</html>

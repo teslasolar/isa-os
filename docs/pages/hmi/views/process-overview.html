@@ -1,0 +1,284 @@
+<div class="view-header">
+    <h1 class="view-title">
+        <i class="fas fa-project-diagram"></i> Process Overview
+    </h1>
+    <div class="view-actions">
+        <button class="btn btn-secondary">
+            <i class="fas fa-expand"></i> Fullscreen
+        </button>
+        <button class="btn btn-primary" onclick="refreshProcessData()">
+            <i class="fas fa-sync"></i> Refresh
+        </button>
+    </div>
+</div>
+
+<style>
+    .process-diagram {
+        background: #1e293b;
+        border-radius: 12px;
+        padding: 2rem;
+        position: relative;
+        min-height: 600px;
+    }
+
+    .component {
+        position: absolute;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .component:hover {
+        transform: scale(1.05);
+    }
+
+    .tank {
+        width: 120px;
+        height: 180px;
+    }
+
+    .pipe {
+        stroke: #64748b;
+        stroke-width: 8;
+        fill: none;
+    }
+
+    .pipe.flow {
+        stroke: #10b981;
+        animation: flow 2s linear infinite;
+    }
+
+    @keyframes flow {
+        0% { stroke-dashoffset: 0; }
+        100% { stroke-dashoffset: -20; }
+    }
+
+    .valve {
+        width: 60px;
+        height: 60px;
+    }
+
+    .pump {
+        width: 80px;
+        height: 80px;
+    }
+
+    .pump.running {
+        animation: rotate 2s linear infinite;
+    }
+
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .indicator {
+        background: #334155;
+        border-radius: 8px;
+        padding: 1rem;
+        min-width: 150px;
+    }
+
+    .indicator-label {
+        font-size: 0.875rem;
+        color: #94a3b8;
+        margin-bottom: 0.5rem;
+    }
+
+    .indicator-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .indicator-value.normal {
+        color: #10b981;
+    }
+
+    .indicator-value.warning {
+        color: #f59e0b;
+    }
+
+    .indicator-value.critical {
+        color: #ef4444;
+    }
+
+    .gauge {
+        width: 120px;
+        height: 120px;
+    }
+
+    .process-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+</style>
+
+<div class="process-diagram">
+    <!-- Feed Tank -->
+    <div class="component" style="left: 50px; top: 50px;">
+        <svg class="tank" viewBox="0 0 120 180">
+            <defs>
+                <linearGradient id="tankGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.3" />
+                    <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0.8" />
+                </linearGradient>
+            </defs>
+            <!-- Tank body -->
+            <rect x="10" y="30" width="100" height="140" rx="5" fill="none" stroke="#64748b" stroke-width="3"/>
+            <!-- Liquid level (animated) -->
+            <rect x="12" y="90" width="96" height="78" fill="url(#tankGradient)" id="tank1-level"/>
+            <!-- Tank label -->
+            <text x="60" y="20" text-anchor="middle" fill="#94a3b8" font-size="14">FEED</text>
+            <text x="60" y="190" text-anchor="middle" fill="#10b981" font-size="16" font-weight="bold" id="tank1-percent">75%</text>
+        </svg>
+    </div>
+
+    <!-- Pump P-101 -->
+    <div class="component pump running" style="left: 200px; top: 120px;">
+        <svg viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="35" fill="#334155" stroke="#64748b" stroke-width="3"/>
+            <circle cx="40" cy="40" r="25" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="5,5"/>
+            <text x="40" y="45" text-anchor="middle" fill="#10b981" font-size="14" font-weight="bold">P-101</text>
+            <circle cx="40" cy="40" r="8" fill="#10b981"/>
+        </svg>
+    </div>
+
+    <!-- Pipe from tank to pump -->
+    <svg style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none;">
+        <path class="pipe flow" d="M 170 140 L 200 140" stroke-dasharray="10,10"/>
+    </svg>
+
+    <!-- Control Valve V-101 -->
+    <div class="component valve" style="left: 320px; top: 110px;">
+        <svg viewBox="0 0 60 60">
+            <polygon points="30,10 50,30 30,50 10,30" fill="#334155" stroke="#64748b" stroke-width="2"/>
+            <circle cx="30" cy="30" r="8" fill="#10b981"/>
+            <text x="30" y="70" text-anchor="middle" fill="#94a3b8" font-size="12">V-101</text>
+        </svg>
+    </div>
+
+    <!-- Pipe from pump to valve -->
+    <svg style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none;">
+        <path class="pipe flow" d="M 280 140 L 320 140" stroke-dasharray="10,10"/>
+    </svg>
+
+    <!-- Reactor Tank -->
+    <div class="component" style="left: 420px; top: 50px;">
+        <svg class="tank" viewBox="0 0 120 180">
+            <rect x="10" y="30" width="100" height="140" rx="5" fill="none" stroke="#64748b" stroke-width="3"/>
+            <rect x="12" y="70" width="96" height="98" fill="url(#tankGradient)" id="tank2-level"/>
+            <circle cx="60" cy="120" r="40" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,5"/>
+            <text x="60" y="20" text-anchor="middle" fill="#94a3b8" font-size="14">REACTOR</text>
+            <text x="60" y="190" text-anchor="middle" fill="#f59e0b" font-size="16" font-weight="bold" id="tank2-percent">60%</text>
+        </svg>
+    </div>
+
+    <!-- Pipe from valve to reactor -->
+    <svg style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none;">
+        <path class="pipe flow" d="M 380 140 L 420 140" stroke-dasharray="10,10"/>
+    </svg>
+
+    <!-- Discharge Pump P-102 -->
+    <div class="component pump running" style="left: 580px; top: 120px;">
+        <svg viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="35" fill="#334155" stroke="#64748b" stroke-width="3"/>
+            <circle cx="40" cy="40" r="25" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="5,5"/>
+            <text x="40" y="45" text-anchor="middle" fill="#10b981" font-size="14" font-weight="bold">P-102</text>
+            <circle cx="40" cy="40" r="8" fill="#10b981"/>
+        </svg>
+    </div>
+
+    <!-- Pipe from reactor to discharge pump -->
+    <svg style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none;">
+        <path class="pipe flow" d="M 540 140 L 580 140" stroke-dasharray="10,10"/>
+    </svg>
+
+    <!-- Product Tank -->
+    <div class="component" style="left: 700px; top: 50px;">
+        <svg class="tank" viewBox="0 0 120 180">
+            <rect x="10" y="30" width="100" height="140" rx="5" fill="none" stroke="#64748b" stroke-width="3"/>
+            <rect x="12" y="110" width="96" height="58" fill="url(#tankGradient)" id="tank3-level"/>
+            <text x="60" y="20" text-anchor="middle" fill="#94a3b8" font-size="14">PRODUCT</text>
+            <text x="60" y="190" text-anchor="middle" fill="#10b981" font-size="16" font-weight="bold" id="tank3-percent">40%</text>
+        </svg>
+    </div>
+
+    <!-- Pipe from pump to product tank -->
+    <svg style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none;">
+        <path class="pipe flow" d="M 660 140 L 700 140" stroke-dasharray="10,10"/>
+    </svg>
+</div>
+
+<!-- Process Indicators -->
+<div class="process-grid">
+    <div class="indicator">
+        <div class="indicator-label">Temperature (TI-101)</div>
+        <div class="indicator-value normal" id="temp-101">75.2°C</div>
+    </div>
+    <div class="indicator">
+        <div class="indicator-label">Pressure (PI-101)</div>
+        <div class="indicator-value normal" id="press-101">2.45 bar</div>
+    </div>
+    <div class="indicator">
+        <div class="indicator-label">Flow Rate (FI-101)</div>
+        <div class="indicator-value normal" id="flow-101">125.5 L/min</div>
+    </div>
+    <div class="indicator">
+        <div class="indicator-label">Pump P-101 Speed</div>
+        <div class="indicator-value normal" id="pump-101-speed">1450 RPM</div>
+    </div>
+    <div class="indicator">
+        <div class="indicator-label">Valve V-101 Position</div>
+        <div class="indicator-value normal" id="valve-101-pos">85%</div>
+    </div>
+    <div class="indicator">
+        <div class="indicator-label">Batch Status</div>
+        <div class="indicator-value warning" id="batch-status">RUNNING</div>
+    </div>
+</div>
+
+<script>
+    function refreshProcessData() {
+        // Simulate random process data updates
+        document.getElementById('temp-101').textContent = (70 + Math.random() * 10).toFixed(1) + '°C';
+        document.getElementById('press-101').textContent = (2.0 + Math.random() * 1.0).toFixed(2) + ' bar';
+        document.getElementById('flow-101').textContent = (100 + Math.random() * 50).toFixed(1) + ' L/min';
+        document.getElementById('pump-101-speed').textContent = (1400 + Math.random() * 100).toFixed(0) + ' RPM';
+        document.getElementById('valve-101-pos').textContent = (80 + Math.random() * 20).toFixed(0) + '%';
+
+        // Update tank levels
+        const tank1 = 70 + Math.random() * 10;
+        const tank2 = 55 + Math.random() * 10;
+        const tank3 = 35 + Math.random() * 10;
+
+        document.getElementById('tank1-percent').textContent = tank1.toFixed(0) + '%';
+        document.getElementById('tank2-percent').textContent = tank2.toFixed(0) + '%';
+        document.getElementById('tank3-percent').textContent = tank3.toFixed(0) + '%';
+
+        // Update tank levels (SVG heights)
+        const tank1Level = document.getElementById('tank1-level');
+        const tank2Level = document.getElementById('tank2-level');
+        const tank3Level = document.getElementById('tank3-level');
+
+        tank1Level.setAttribute('height', (tank1 / 100) * 78);
+        tank1Level.setAttribute('y', 170 - (tank1 / 100) * 78);
+
+        tank2Level.setAttribute('height', (tank2 / 100) * 98);
+        tank2Level.setAttribute('y', 170 - (tank2 / 100) * 98);
+
+        tank3Level.setAttribute('height', (tank3 / 100) * 58);
+        tank3Level.setAttribute('y', 170 - (tank3 / 100) * 58);
+    }
+
+    // Auto-refresh every 5 seconds
+    setInterval(refreshProcessData, 5000);
+
+    // Initial load
+    function init_process_overview() {
+        refreshProcessData();
+    }
+
+    window.init_process_overview = init_process_overview;
+    init_process_overview();
+</script>

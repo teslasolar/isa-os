@@ -1,0 +1,667 @@
+<div class="view-header">
+    <h1 class="view-title">
+        <i class="fas fa-bell"></i> Alarm Management (ISA-18.2)
+    </h1>
+    <div class="view-actions">
+        <button class="btn btn-secondary" id="ack-all-btn" onclick="acknowledgeAll()">
+            <i class="fas fa-check-double"></i> Acknowledge All
+        </button>
+        <button class="btn btn-secondary" onclick="toggleAlarmSound()">
+            <i class="fas fa-volume-up" id="sound-icon"></i> <span id="sound-text">Mute</span>
+        </button>
+        <button class="btn btn-primary" onclick="exportAlarms()">
+            <i class="fas fa-download"></i> Export
+        </button>
+    </div>
+</div>
+
+<style>
+    .alarm-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: #1e293b;
+        border-radius: 8px;
+        padding: 1.5rem;
+        border-left: 4px solid;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .stat-card.critical { border-color: #ef4444; }
+    .stat-card.high { border-color: #f59e0b; }
+    .stat-card.medium { border-color: #eab308; }
+    .stat-card.low { border-color: #3b82f6; }
+    .stat-card.info { border-color: #64748b; }
+
+    .stat-info h3 {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-info p {
+        font-size: 0.875rem;
+        color: #94a3b8;
+    }
+
+    .stat-icon {
+        font-size: 2.5rem;
+        opacity: 0.5;
+    }
+
+    .critical .stat-icon { color: #ef4444; }
+    .high .stat-icon { color: #f59e0b; }
+    .medium .stat-icon { color: #eab308; }
+    .low .stat-icon { color: #3b82f6; }
+    .info .stat-icon { color: #64748b; }
+
+    .alarm-filters {
+        background: #1e293b;
+        border-radius: 8px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-group label {
+        font-size: 0.875rem;
+        color: #cbd5e1;
+    }
+
+    .filter-select {
+        background: #334155;
+        border: 1px solid #475569;
+        border-radius: 6px;
+        color: white;
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+    }
+
+    .alarm-table-container {
+        background: #1e293b;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .alarm-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .alarm-table thead {
+        background: #334155;
+    }
+
+    .alarm-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: #cbd5e1;
+        border-bottom: 2px solid #475569;
+    }
+
+    .alarm-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #334155;
+    }
+
+    .alarm-table tbody tr {
+        transition: background 0.2s;
+    }
+
+    .alarm-table tbody tr:hover {
+        background: #334155;
+    }
+
+    .alarm-table tbody tr.unacknowledged {
+        background: rgba(239, 68, 68, 0.1);
+        animation: alarm-flash 2s infinite;
+    }
+
+    @keyframes alarm-flash {
+        0%, 100% { background: rgba(239, 68, 68, 0.1); }
+        50% { background: rgba(239, 68, 68, 0.2); }
+    }
+
+    .priority-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        display: inline-block;
+    }
+
+    .priority-critical {
+        background: #ef4444;
+        color: white;
+    }
+
+    .priority-high {
+        background: #f59e0b;
+        color: white;
+    }
+
+    .priority-medium {
+        background: #eab308;
+        color: #1e293b;
+    }
+
+    .priority-low {
+        background: #3b82f6;
+        color: white;
+    }
+
+    .priority-info {
+        background: #64748b;
+        color: white;
+    }
+
+    .state-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .state-active {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid #ef4444;
+    }
+
+    .state-acknowledged {
+        background: rgba(234, 179, 8, 0.2);
+        color: #eab308;
+        border: 1px solid #eab308;
+    }
+
+    .state-cleared {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+        border: 1px solid #10b981;
+    }
+
+    .alarm-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .action-btn {
+        background: none;
+        border: 1px solid #475569;
+        color: #cbd5e1;
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+
+    .action-btn:hover {
+        background: #475569;
+        color: white;
+    }
+
+    .action-btn.ack-btn:hover {
+        background: #10b981;
+        border-color: #10b981;
+    }
+
+    .alarm-details {
+        margin-top: 2rem;
+        background: #1e293b;
+        border-radius: 8px;
+        padding: 1.5rem;
+    }
+
+    .details-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .details-content {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .detail-label {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+    }
+
+    .detail-value {
+        font-size: 1rem;
+        color: #cbd5e1;
+        font-weight: 500;
+    }
+</style>
+
+<div class="alarm-stats">
+    <div class="stat-card critical">
+        <div class="stat-info">
+            <h3 id="stat-critical">0</h3>
+            <p>Critical</p>
+        </div>
+        <i class="fas fa-exclamation-triangle stat-icon"></i>
+    </div>
+    <div class="stat-card high">
+        <div class="stat-info">
+            <h3 id="stat-high">0</h3>
+            <p>High</p>
+        </div>
+        <i class="fas fa-exclamation-circle stat-icon"></i>
+    </div>
+    <div class="stat-card medium">
+        <div class="stat-info">
+            <h3 id="stat-medium">0</h3>
+            <p>Medium</p>
+        </div>
+        <i class="fas fa-info-circle stat-icon"></i>
+    </div>
+    <div class="stat-card low">
+        <div class="stat-info">
+            <h3 id="stat-low">0</h3>
+            <p>Low</p>
+        </div>
+        <i class="fas fa-bell stat-icon"></i>
+    </div>
+    <div class="stat-card info">
+        <div class="stat-info">
+            <h3 id="stat-info">0</h3>
+            <p>Info</p>
+        </div>
+        <i class="fas fa-info stat-icon"></i>
+    </div>
+</div>
+
+<div class="alarm-filters">
+    <div class="filter-group">
+        <label>Priority:</label>
+        <select class="filter-select" id="priority-filter" onchange="filterAlarms()">
+            <option value="all">All</option>
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+            <option value="info">Info</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>State:</label>
+        <select class="filter-select" id="state-filter" onchange="filterAlarms()">
+            <option value="all">All</option>
+            <option value="active">Active</option>
+            <option value="acknowledged">Acknowledged</option>
+            <option value="cleared">Cleared</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Source:</label>
+        <select class="filter-select" id="source-filter" onchange="filterAlarms()">
+            <option value="all">All</option>
+            <option value="L0">L0 - Field Devices</option>
+            <option value="L1">L1 - Basic Control</option>
+            <option value="L2">L2 - Supervisory</option>
+            <option value="L3">L3 - MES</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Show Only Unack:</label>
+        <input type="checkbox" id="unack-filter" onchange="filterAlarms()">
+    </div>
+</div>
+
+<div class="alarm-table-container">
+    <table class="alarm-table">
+        <thead>
+            <tr>
+                <th>Priority</th>
+                <th>Timestamp</th>
+                <th>Source</th>
+                <th>Message</th>
+                <th>State</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="alarm-table-body">
+            <!-- Alarms will be populated here -->
+        </tbody>
+    </table>
+</div>
+
+<div class="alarm-details" id="alarm-details" style="display: none;">
+    <div class="details-header">
+        <h3><i class="fas fa-info-circle"></i> Alarm Details</h3>
+        <button class="btn btn-secondary" onclick="closeDetails()">
+            <i class="fas fa-times"></i> Close
+        </button>
+    </div>
+    <div class="details-content" id="details-content">
+        <!-- Details will be populated here -->
+    </div>
+</div>
+
+<script>
+    let alarms = [];
+    let soundEnabled = true;
+
+    // ISA-18.2 Alarm data model
+    const alarmTemplates = [
+        { priority: 'critical', source: 'L0', device: 'Reactor-101', message: 'Temperature high-high limit exceeded', value: '125°C', limit: '120°C' },
+        { priority: 'critical', source: 'L0', device: 'Pump-P101', message: 'Emergency stop activated', value: 'STOPPED', limit: 'N/A' },
+        { priority: 'high', source: 'L1', device: 'PLC-1', message: 'Pressure exceeding high limit', value: '8.2 bar', limit: '8.0 bar' },
+        { priority: 'high', source: 'L0', device: 'Valve-V101', message: 'Failed to reach position', value: '65%', limit: '85%' },
+        { priority: 'medium', source: 'L2', device: 'SCADA', message: 'Communication timeout with field device', value: '30s', limit: '10s' },
+        { priority: 'medium', source: 'L1', device: 'Motor-M101', message: 'Vibration above normal', value: '5.2 mm/s', limit: '4.5 mm/s' },
+        { priority: 'low', source: 'L0', device: 'Tank-T101', message: 'Low level warning', value: '15%', limit: '20%' },
+        { priority: 'low', source: 'L2', device: 'Historian', message: 'Database storage at 75%', value: '75%', limit: '80%' },
+        { priority: 'info', source: 'L1', device: 'Controller-1', message: 'Batch phase completed', value: 'Phase 3', limit: 'N/A' },
+        { priority: 'info', source: 'L3', device: 'MES', message: 'Production order updated', value: 'PO-12345', limit: 'N/A' }
+    ];
+
+    function generateAlarm(template) {
+        const now = new Date();
+        return {
+            id: Date.now() + Math.random(),
+            priority: template.priority,
+            source: template.source,
+            device: template.device,
+            message: template.message,
+            value: template.value,
+            limit: template.limit,
+            state: 'active',
+            timestamp: now.toISOString(),
+            acknowledgedBy: null,
+            acknowledgedAt: null,
+            clearedAt: null
+        };
+    }
+
+    function initializeAlarms() {
+        // Create initial alarms
+        alarms = [];
+        alarmTemplates.slice(0, 6).forEach(template => {
+            alarms.push(generateAlarm(template));
+        });
+
+        // Acknowledge some alarms
+        if (alarms[2]) alarms[2].state = 'acknowledged';
+        if (alarms[4]) alarms[4].state = 'acknowledged';
+
+        // Clear some alarms
+        if (alarms[5]) alarms[5].state = 'cleared';
+
+        renderAlarms();
+        updateStats();
+    }
+
+    function renderAlarms() {
+        const tbody = document.getElementById('alarm-table-body');
+        const filteredAlarms = getFilteredAlarms();
+
+        if (filteredAlarms.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;">No alarms match the current filters</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = filteredAlarms.map(alarm => `
+            <tr class="${alarm.state === 'active' ? 'unacknowledged' : ''}" onclick="showDetails('${alarm.id}')">
+                <td>
+                    <span class="priority-badge priority-${alarm.priority}">
+                        ${alarm.priority}
+                    </span>
+                </td>
+                <td>${new Date(alarm.timestamp).toLocaleString()}</td>
+                <td><strong>${alarm.source}</strong><br><small style="color: #94a3b8;">${alarm.device}</small></td>
+                <td>${alarm.message}</td>
+                <td>
+                    <span class="state-badge state-${alarm.state}">
+                        ${alarm.state}
+                    </span>
+                </td>
+                <td>
+                    <div class="alarm-actions">
+                        ${alarm.state === 'active' ? `
+                            <button class="action-btn ack-btn" onclick="event.stopPropagation(); acknowledgeAlarm('${alarm.id}')">
+                                <i class="fas fa-check"></i> Ack
+                            </button>
+                        ` : ''}
+                        ${alarm.state === 'acknowledged' ? `
+                            <button class="action-btn" onclick="event.stopPropagation(); clearAlarm('${alarm.id}')">
+                                <i class="fas fa-times-circle"></i> Clear
+                            </button>
+                        ` : ''}
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function getFilteredAlarms() {
+        const priorityFilter = document.getElementById('priority-filter').value;
+        const stateFilter = document.getElementById('state-filter').value;
+        const sourceFilter = document.getElementById('source-filter').value;
+        const unackOnly = document.getElementById('unack-filter').checked;
+
+        return alarms.filter(alarm => {
+            if (priorityFilter !== 'all' && alarm.priority !== priorityFilter) return false;
+            if (stateFilter !== 'all' && alarm.state !== stateFilter) return false;
+            if (sourceFilter !== 'all' && alarm.source !== sourceFilter) return false;
+            if (unackOnly && alarm.state !== 'active') return false;
+            return true;
+        });
+    }
+
+    function updateStats() {
+        const stats = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+
+        alarms.forEach(alarm => {
+            if (alarm.state !== 'cleared') {
+                stats[alarm.priority]++;
+            }
+        });
+
+        document.getElementById('stat-critical').textContent = stats.critical;
+        document.getElementById('stat-high').textContent = stats.high;
+        document.getElementById('stat-medium').textContent = stats.medium;
+        document.getElementById('stat-low').textContent = stats.low;
+        document.getElementById('stat-info').textContent = stats.info;
+    }
+
+    function acknowledgeAlarm(alarmId) {
+        const alarm = alarms.find(a => a.id == alarmId);
+        if (alarm && alarm.state === 'active') {
+            alarm.state = 'acknowledged';
+            alarm.acknowledgedBy = 'Operator';
+            alarm.acknowledgedAt = new Date().toISOString();
+            renderAlarms();
+            updateStats();
+            console.log('Alarm acknowledged:', alarmId);
+        }
+    }
+
+    function acknowledgeAll() {
+        alarms.forEach(alarm => {
+            if (alarm.state === 'active') {
+                alarm.state = 'acknowledged';
+                alarm.acknowledgedBy = 'Operator';
+                alarm.acknowledgedAt = new Date().toISOString();
+            }
+        });
+        renderAlarms();
+        updateStats();
+        console.log('All alarms acknowledged');
+    }
+
+    function clearAlarm(alarmId) {
+        const alarm = alarms.find(a => a.id == alarmId);
+        if (alarm && alarm.state === 'acknowledged') {
+            alarm.state = 'cleared';
+            alarm.clearedAt = new Date().toISOString();
+            renderAlarms();
+            updateStats();
+            console.log('Alarm cleared:', alarmId);
+        }
+    }
+
+    function filterAlarms() {
+        renderAlarms();
+    }
+
+    function showDetails(alarmId) {
+        const alarm = alarms.find(a => a.id == alarmId);
+        if (!alarm) return;
+
+        const detailsContent = document.getElementById('details-content');
+        detailsContent.innerHTML = `
+            <div class="detail-item">
+                <span class="detail-label">Alarm ID</span>
+                <span class="detail-value">${alarm.id}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Priority</span>
+                <span class="detail-value">
+                    <span class="priority-badge priority-${alarm.priority}">${alarm.priority}</span>
+                </span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Source Level</span>
+                <span class="detail-value">${alarm.source}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Device</span>
+                <span class="detail-value">${alarm.device}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Message</span>
+                <span class="detail-value">${alarm.message}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Current Value</span>
+                <span class="detail-value">${alarm.value}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Limit</span>
+                <span class="detail-value">${alarm.limit}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">State</span>
+                <span class="detail-value">
+                    <span class="state-badge state-${alarm.state}">${alarm.state}</span>
+                </span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Timestamp</span>
+                <span class="detail-value">${new Date(alarm.timestamp).toLocaleString()}</span>
+            </div>
+            ${alarm.acknowledgedAt ? `
+                <div class="detail-item">
+                    <span class="detail-label">Acknowledged By</span>
+                    <span class="detail-value">${alarm.acknowledgedBy}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Acknowledged At</span>
+                    <span class="detail-value">${new Date(alarm.acknowledgedAt).toLocaleString()}</span>
+                </div>
+            ` : ''}
+            ${alarm.clearedAt ? `
+                <div class="detail-item">
+                    <span class="detail-label">Cleared At</span>
+                    <span class="detail-value">${new Date(alarm.clearedAt).toLocaleString()}</span>
+                </div>
+            ` : ''}
+        `;
+
+        document.getElementById('alarm-details').style.display = 'block';
+    }
+
+    function closeDetails() {
+        document.getElementById('alarm-details').style.display = 'none';
+    }
+
+    function toggleAlarmSound() {
+        soundEnabled = !soundEnabled;
+        const icon = document.getElementById('sound-icon');
+        const text = document.getElementById('sound-text');
+
+        if (soundEnabled) {
+            icon.className = 'fas fa-volume-up';
+            text.textContent = 'Mute';
+        } else {
+            icon.className = 'fas fa-volume-mute';
+            text.textContent = 'Unmute';
+        }
+    }
+
+    function exportAlarms() {
+        const csv = 'Priority,Timestamp,Source,Device,Message,Value,Limit,State\n' +
+            alarms.map(a =>
+                `${a.priority},"${new Date(a.timestamp).toLocaleString()}",${a.source},${a.device},"${a.message}",${a.value},${a.limit},${a.state}`
+            ).join('\n');
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `alarms_${new Date().toISOString()}.csv`;
+        a.click();
+        console.log('Alarms exported');
+    }
+
+    // Simulate new alarms
+    function simulateAlarms() {
+        if (Math.random() < 0.3) {
+            const template = alarmTemplates[Math.floor(Math.random() * alarmTemplates.length)];
+            const newAlarm = generateAlarm(template);
+            alarms.unshift(newAlarm);
+
+            if (alarms.length > 50) {
+                alarms = alarms.slice(0, 50);
+            }
+
+            renderAlarms();
+            updateStats();
+
+            if (soundEnabled && ['critical', 'high'].includes(newAlarm.priority)) {
+                console.log('ALARM SOUND:', newAlarm.priority, newAlarm.message);
+            }
+        }
+    }
+
+    setInterval(simulateAlarms, 10000);
+
+    function init_alarms() {
+        initializeAlarms();
+    }
+
+    window.init_alarms = init_alarms;
+</script>

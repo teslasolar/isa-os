@@ -1,0 +1,585 @@
+<div class="view-header">
+    <h1 class="view-title">
+        <i class="fas fa-tasks"></i> Batch Status (ISA-88)
+    </h1>
+    <div class="view-actions">
+        <button class="btn btn-secondary" onclick="pauseBatch()">
+            <i class="fas fa-pause"></i> Pause Batch
+        </button>
+        <button class="btn btn-primary" onclick="startNewBatch()">
+            <i class="fas fa-play"></i> Start New Batch
+        </button>
+    </div>
+</div>
+
+<style>
+    .batch-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .overview-card {
+        background: #1e293b;
+        border-radius: 8px;
+        padding: 1.5rem;
+        border-left: 4px solid;
+    }
+
+    .overview-card.active { border-color: #10b981; }
+    .overview-card.info { border-color: #3b82f6; }
+    .overview-card.warning { border-color: #f59e0b; }
+
+    .overview-label {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+
+    .overview-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #cbd5e1;
+    }
+
+    .overview-unit {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin-left: 0.5rem;
+    }
+
+    .batch-container {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .recipe-panel {
+        background: #1e293b;
+        border-radius: 8px;
+        padding: 1.5rem;
+    }
+
+    .recipe-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .recipe-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .recipe-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 700;
+    }
+
+    .badge-running {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+        border: 1px solid #10b981;
+    }
+
+    .badge-paused {
+        background: rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+        border: 1px solid #f59e0b;
+    }
+
+    .badge-complete {
+        background: rgba(59, 130, 246, 0.2);
+        color: #3b82f6;
+        border: 1px solid #3b82f6;
+    }
+
+    .recipe-info {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .info-label {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+    }
+
+    .info-value {
+        font-size: 1rem;
+        color: #cbd5e1;
+        font-weight: 500;
+    }
+
+    .phase-timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+
+    .phase-item {
+        position: relative;
+        padding-bottom: 2rem;
+    }
+
+    .phase-item:last-child {
+        padding-bottom: 0;
+    }
+
+    .phase-item::before {
+        content: '';
+        position: absolute;
+        left: -1.5rem;
+        top: 0.5rem;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 3px solid;
+    }
+
+    .phase-item::after {
+        content: '';
+        position: absolute;
+        left: -1.19rem;
+        top: 1.25rem;
+        width: 2px;
+        height: calc(100% - 0.5rem);
+        background: #334155;
+    }
+
+    .phase-item:last-child::after {
+        display: none;
+    }
+
+    .phase-item.completed::before {
+        background: #10b981;
+        border-color: #10b981;
+    }
+
+    .phase-item.active::before {
+        background: #f59e0b;
+        border-color: #f59e0b;
+        animation: pulse-phase 2s infinite;
+    }
+
+    .phase-item.pending::before {
+        background: #334155;
+        border-color: #64748b;
+    }
+
+    @keyframes pulse-phase {
+        0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+        50% { opacity: 0.7; box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+    }
+
+    .phase-content {
+        background: #334155;
+        border-radius: 6px;
+        padding: 1rem;
+    }
+
+    .phase-name {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .phase-details {
+        font-size: 0.875rem;
+        color: #94a3b8;
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .phase-progress {
+        margin-top: 0.75rem;
+    }
+
+    .progress-bar {
+        height: 6px;
+        background: #1e293b;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: #10b981;
+        transition: width 0.3s;
+    }
+
+    .parameters-panel {
+        background: #1e293b;
+        border-radius: 8px;
+        padding: 1.5rem;
+    }
+
+    .parameter-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .parameter-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .parameter-group h4 {
+        font-size: 0.875rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+    }
+
+    .parameter-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: #334155;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+    }
+
+    .parameter-name {
+        font-size: 0.875rem;
+        color: #cbd5e1;
+    }
+
+    .parameter-value {
+        font-weight: 600;
+        color: #10b981;
+    }
+
+    .batch-history {
+        background: #1e293b;
+        border-radius: 8px;
+        padding: 1.5rem;
+    }
+
+    .history-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+    .history-table th {
+        text-align: left;
+        padding: 0.75rem;
+        background: #334155;
+        font-size: 0.875rem;
+        color: #cbd5e1;
+    }
+
+    .history-table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid #334155;
+    }
+
+    .batch-result {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .result-success { background: #10b981; color: white; }
+    .result-failed { background: #ef4444; color: white; }
+    .result-aborted { background: #64748b; color: white; }
+
+    @media (max-width: 1024px) {
+        .batch-container {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="batch-overview">
+    <div class="overview-card active">
+        <div class="overview-label">Current Batch</div>
+        <div class="overview-value" id="current-batch">B-24325</div>
+    </div>
+    <div class="overview-card info">
+        <div class="overview-label">Current Phase</div>
+        <div class="overview-value" id="current-phase">3<span class="overview-unit">of 8</span></div>
+    </div>
+    <div class="overview-card info">
+        <div class="overview-label">Progress</div>
+        <div class="overview-value" id="batch-progress">37<span class="overview-unit">%</span></div>
+    </div>
+    <div class="overview-card warning">
+        <div class="overview-label">Remaining Time</div>
+        <div class="overview-value" id="remaining-time">42<span class="overview-unit">min</span></div>
+    </div>
+</div>
+
+<div class="batch-container">
+    <div class="recipe-panel">
+        <div class="recipe-header">
+            <div class="recipe-title">
+                <i class="fas fa-flask"></i> Recipe: Product-A-Standard
+            </div>
+            <div class="recipe-badge badge-running">RUNNING</div>
+        </div>
+
+        <div class="recipe-info">
+            <div class="info-item">
+                <span class="info-label">Batch ID</span>
+                <span class="info-value">B-24325</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Product</span>
+                <span class="info-value">Product-A</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Start Time</span>
+                <span class="info-value" id="start-time">--:--:--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Target Quantity</span>
+                <span class="info-value">500 kg</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Unit Procedure</span>
+                <span class="info-value">Reactor-101</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Operator</span>
+                <span class="info-value">J. Smith</span>
+            </div>
+        </div>
+
+        <h3 style="margin: 1.5rem 0 1rem 0;"><i class="fas fa-list-ol"></i> Phase Execution</h3>
+
+        <div class="phase-timeline" id="phase-timeline">
+            <!-- Phases will be populated here -->
+        </div>
+    </div>
+
+    <div class="parameters-panel">
+        <h3><i class="fas fa-sliders-h"></i> Process Parameters</h3>
+
+        <div class="parameter-group">
+            <h4>Setpoints</h4>
+            <div class="parameter-item">
+                <span class="parameter-name">Temperature</span>
+                <span class="parameter-value" id="sp-temp">75.0 °C</span>
+            </div>
+            <div class="parameter-item">
+                <span class="parameter-name">Pressure</span>
+                <span class="parameter-value" id="sp-pressure">3.5 bar</span>
+            </div>
+            <div class="parameter-item">
+                <span class="parameter-name">Agitation Speed</span>
+                <span class="parameter-value" id="sp-agitation">250 RPM</span>
+            </div>
+        </div>
+
+        <div class="parameter-group">
+            <h4>Process Values</h4>
+            <div class="parameter-item">
+                <span class="parameter-name">Temperature</span>
+                <span class="parameter-value" id="pv-temp">74.8 °C</span>
+            </div>
+            <div class="parameter-item">
+                <span class="parameter-name">Pressure</span>
+                <span class="parameter-value" id="pv-pressure">3.52 bar</span>
+            </div>
+            <div class="parameter-item">
+                <span class="parameter-name">Agitation Speed</span>
+                <span class="parameter-value" id="pv-agitation">248 RPM</span>
+            </div>
+            <div class="parameter-item">
+                <span class="parameter-name">pH Level</span>
+                <span class="parameter-value" id="pv-ph">7.2</span>
+            </div>
+        </div>
+
+        <div class="parameter-group">
+            <h4>Batch Totals</h4>
+            <div class="parameter-item">
+                <span class="parameter-name">Feed A Added</span>
+                <span class="parameter-value" id="total-feed-a">245.2 kg</span>
+            </div>
+            <div class="parameter-item">
+                <span class="parameter-name">Feed B Added</span>
+                <span class="parameter-value" id="total-feed-b">122.8 kg</span>
+            </div>
+            <div class="parameter-item">
+                <span class="parameter-name">Catalyst Added</span>
+                <span class="parameter-value" id="total-catalyst">5.5 kg</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="batch-history">
+    <h3><i class="fas fa-history"></i> Recent Batch History</h3>
+    <table class="history-table">
+        <thead>
+            <tr>
+                <th>Batch ID</th>
+                <th>Recipe</th>
+                <th>Start Time</th>
+                <th>Duration</th>
+                <th>Quantity</th>
+                <th>Result</th>
+            </tr>
+        </thead>
+        <tbody id="history-body">
+            <!-- History will be populated here -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    const phases = [
+        { name: 'Charge Feed A', status: 'completed', duration: 10, progress: 100 },
+        { name: 'Charge Feed B', status: 'completed', duration: 8, progress: 100 },
+        { name: 'Heat to Setpoint', status: 'active', duration: 15, progress: 65 },
+        { name: 'Add Catalyst', status: 'pending', duration: 5, progress: 0 },
+        { name: 'Reaction Hold', status: 'pending', duration: 30, progress: 0 },
+        { name: 'Cool Down', status: 'pending', duration: 20, progress: 0 },
+        { name: 'Discharge', status: 'pending', duration: 12, progress: 0 },
+        { name: 'CIP (Clean-in-Place)', status: 'pending', duration: 15, progress: 0 }
+    ];
+
+    const batchHistory = [
+        { id: 'B-24324', recipe: 'Product-A-Standard', start: '2024-11-19 06:00', duration: '2h 15m', quantity: '500 kg', result: 'success' },
+        { id: 'B-24323', recipe: 'Product-A-Standard', start: '2024-11-19 02:30', duration: '2h 18m', quantity: '500 kg', result: 'success' },
+        { id: 'B-24322', recipe: 'Product-B-Enhanced', start: '2024-11-18 22:00', duration: '3h 05m', quantity: '750 kg', result: 'success' },
+        { id: 'B-24321', recipe: 'Product-A-Standard', start: '2024-11-18 18:15', duration: '1h 42m', quantity: '500 kg', result: 'aborted' },
+        { id: 'B-24320', recipe: 'Product-C-Special', start: '2024-11-18 14:00', duration: '4h 20m', quantity: '1000 kg', result: 'success' }
+    ];
+
+    let batchStartTime = new Date();
+    let currentPhaseIndex = 2;
+
+    function renderPhases() {
+        const timeline = document.getElementById('phase-timeline');
+
+        timeline.innerHTML = phases.map((phase, index) => `
+            <div class="phase-item ${phase.status}">
+                <div class="phase-content">
+                    <div class="phase-name">
+                        <span>Phase ${index + 1}: ${phase.name}</span>
+                        ${phase.status === 'completed' ? '<i class="fas fa-check-circle" style="color: #10b981;"></i>' : ''}
+                        ${phase.status === 'active' ? '<i class="fas fa-spinner fa-pulse" style="color: #f59e0b;"></i>' : ''}
+                    </div>
+                    <div class="phase-details">
+                        <span><i class="fas fa-clock"></i> ${phase.duration} min</span>
+                        <span><i class="fas fa-info-circle"></i> ${phase.status.toUpperCase()}</span>
+                    </div>
+                    ${phase.status === 'active' ? `
+                        <div class="phase-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${phase.progress}%"></div>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderHistory() {
+        const tbody = document.getElementById('history-body');
+
+        tbody.innerHTML = batchHistory.map(batch => `
+            <tr>
+                <td><strong>${batch.id}</strong></td>
+                <td>${batch.recipe}</td>
+                <td>${batch.start}</td>
+                <td>${batch.duration}</td>
+                <td>${batch.quantity}</td>
+                <td><span class="batch-result result-${batch.result}">${batch.result.toUpperCase()}</span></td>
+            </tr>
+        `).join('');
+    }
+
+    function updateBatchProgress() {
+        // Update active phase progress
+        if (phases[currentPhaseIndex].status === 'active') {
+            phases[currentPhaseIndex].progress += 0.5;
+
+            if (phases[currentPhaseIndex].progress >= 100) {
+                phases[currentPhaseIndex].progress = 100;
+                phases[currentPhaseIndex].status = 'completed';
+
+                currentPhaseIndex++;
+                if (currentPhaseIndex < phases.length) {
+                    phases[currentPhaseIndex].status = 'active';
+                }
+            }
+        }
+
+        // Calculate overall progress
+        const completedPhases = phases.filter(p => p.status === 'completed').length;
+        const totalPhases = phases.length;
+        const activeProgress = phases[currentPhaseIndex] ? phases[currentPhaseIndex].progress : 0;
+        const overallProgress = ((completedPhases + (activeProgress / 100)) / totalPhases * 100).toFixed(0);
+
+        document.getElementById('batch-progress').innerHTML = `${overallProgress}<span class="overview-unit">%</span>`;
+        document.getElementById('current-phase').innerHTML = `${currentPhaseIndex + 1}<span class="overview-unit">of ${totalPhases}</span>`;
+
+        // Calculate remaining time
+        const remainingPhases = phases.slice(currentPhaseIndex);
+        let remainingMinutes = remainingPhases.reduce((sum, phase) => {
+            if (phase.status === 'active') {
+                return sum + (phase.duration * (100 - phase.progress) / 100);
+            }
+            return sum + (phase.status === 'pending' ? phase.duration : 0);
+        }, 0);
+
+        document.getElementById('remaining-time').innerHTML = `${Math.ceil(remainingMinutes)}<span class="overview-unit">min</span>`;
+
+        renderPhases();
+
+        // Update process values with small variations
+        document.getElementById('pv-temp').textContent = (74.5 + Math.random() * 1).toFixed(1) + ' °C';
+        document.getElementById('pv-pressure').textContent = (3.5 + Math.random() * 0.1).toFixed(2) + ' bar';
+        document.getElementById('pv-agitation').textContent = Math.floor(245 + Math.random() * 10) + ' RPM';
+        document.getElementById('pv-ph').textContent = (7.1 + Math.random() * 0.2).toFixed(1);
+    }
+
+    function pauseBatch() {
+        alert('Batch paused. Waiting for operator action.');
+        console.log('Batch paused');
+    }
+
+    function startNewBatch() {
+        if (confirm('Start a new batch? This will use the current recipe configuration.')) {
+            alert('New batch B-24326 started');
+            console.log('New batch started');
+        }
+    }
+
+    function init_batch_status() {
+        // Set start time
+        batchStartTime = new Date(Date.now() - 37 * 60000); // 37 minutes ago
+        document.getElementById('start-time').textContent = batchStartTime.toLocaleTimeString();
+
+        renderPhases();
+        renderHistory();
+
+        // Update every 2 seconds
+        setInterval(updateBatchProgress, 2000);
+    }
+
+    window.init_batch_status = init_batch_status;
+</script>
